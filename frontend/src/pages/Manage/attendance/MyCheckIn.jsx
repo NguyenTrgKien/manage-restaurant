@@ -63,17 +63,17 @@ function MyCheckIn() {
   return (
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8 min-h-[calc(100vh-10rem)]">
       <div>
-        <h3 className="text-[2.2rem] font-semibold text-gray-800">
+        <h3 className="text-[1.8rem] md:text-[2.2rem] font-semibold text-gray-800">
           Quét mã chấm công
         </h3>
-        <p>
+        <p className="text-[1.4rem] md:text-[1.6rem]">
           {today}, {dayjs(now).format("DD/MM/YYYY")}
         </p>
       </div>
       <div className="text-center">
         {result && (
           <div
-            className={`w-full max-w-[40rem] mx-auto p-[2rem] rounded-[1.2rem] text-center text-[1.8rem] font-medium ${
+            className={`w-full max-w-[40rem] mx-auto p-[2rem] rounded-[1.2rem] text-center text-[1.4rem] md:text-[1.8rem] font-medium ${
               result.success
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-600 border border-red-200"
@@ -91,7 +91,7 @@ function MyCheckIn() {
             />
             <button
               onClick={stopScan}
-              className="w-full mt-4 py-[1.2rem] rounded-[.8rem] border border-gray-300 text-[1.6rem] text-gray-600"
+              className="w-full mt-4 py-[1.2rem] rounded-[.8rem] border border-gray-300 text-[1.4rem] md:text-[1.8rem] text-gray-600"
             >
               Huỷ
             </button>
@@ -102,7 +102,7 @@ function MyCheckIn() {
           <button
             onClick={() => setIsScanning(true)}
             disabled={isSubmitting}
-            className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.8rem] font-semibold transition-colors disabled:opacity-60"
+            className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60"
           >
             {isSubmitting ? "Đang xử lý..." : "Quét mã QR"}
           </button>
@@ -111,7 +111,7 @@ function MyCheckIn() {
         {result?.success && (
           <button
             onClick={() => setResult(null)}
-            className="text-[1.5rem] text-gray-400 underline"
+            className="text-[1.4rem] md:text-[1.6rem] text-gray-400 underline"
           >
             Quét lại
           </button>
