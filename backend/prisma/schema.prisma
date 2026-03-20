@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  fullName  String?
+  email     String?  @unique
+  password  String?
+  role      String?
+  image     String?
+  publicId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff      Staff?
+  orders     Order[]
+  orderTables OrderTable[]
+  cart       Cart?
+  customer   Customer?
+  evaluate   Evaluate[]
+}
+
+enum StaffPosition {
+    MANAGER
+    WAITER
+    CHEF
+    CASHIER
+    SECURITY
+}
+
+enum StaffStatus {
+  WORKING
+  ON_LEAVE
+  RESIGNED
+}
+
+model Staff {
+  id          Int       @id @default(autoincrement())
+  userId      Int?      @unique
+  address     String?
+  phoneNumber String?
+  gender      String?
+  startDate   DateTime?
+  position    StaffPosition @default(WAITER)
+  status      StaffStatus @default(WORKING)
+  avatar      String?
+  publicId    String?
+  salary      Decimal?  @db.Decimal(11, 0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  foods Food[]
+}
+
+model Food {
+  id         Int      @id @default(autoincrement())
+  name       String?
+  price      Decimal? @db.Decimal(10, 3)
+  image      String?
+  banner     String?
+  quantity   Int?
+  categoryId Int?
+  publicId    String?
+  description String?
+  isAvailable Boolean @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  evaluates  Evaluate[]
+}
+
+model Room {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tables Table[]
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+model Table {
+  id          Int      @id @default(autoincrement())
+  name        String?
+  roomId      Int?
+  status  TableStatus  @default(AVAILABLE)
+  capacity    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  room        Room?        @relation(fields: [roomId], references: [id])
+  orderTables OrderTable[]
+}
+
+model TimeFrame {
+  id        Int      @id @default(autoincrement())
+  startTime String?
+  endTime   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive Boolean @default(true)
+
+  orderTables OrderTable[]
+}
+
+model OrderTable {
+  id           Int       @id @default(autoincrement())
+  userId       Int?
+  tableId      Int?
+  orderDate    DateTime?
+  status       String?
+  numberGuests Int?
+  timeFrameId  Int?
+  note          String?
+  cancelReason  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  table     Table?     @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  timeFrame TimeFrame? @relation(fields: [timeFrameId], references: [id])
+  orders    Order[]
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  userId        Int?
+  totalAmount   Decimal? @db.Decimal(10, 3)
+  paymentMethod String?
+  orderTableId  Int?
+  fullName      String?
+  status        String?
+  note          String?
+  cancelReason  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  paidAt        DateTime?
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderTable OrderTable? @relation(fields: [orderTableId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+   evaluates  Evaluate[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int?
+  foodId    Int?
+  foodName  String?
+  quantity  Int?
+  price     Decimal? @db.Decimal(10, 3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  food  Food?  @relation(fields: [foodId], references: [id])
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int?
+  foodId    Int?
+  quantity  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart Cart? @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  food Food? @relation(fields: [foodId], references: [id])
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @unique
+  phoneNumber String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Evaluate {
+  id        Int      @id @default(autoincrement())
+  userId    Int? 
+  rating    Int?
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  foodId    Int?
+  orderId    Int?
+
+  food  Food?  @relation(fields: [foodId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum AttendanceStatus {
+  PRESENT  // CÓ MẶT
+  LATE  // TRỂ
+  ABSENT // VẮNG MẶT
+  LEAVE // NGHỈ PHÉP
+}
+
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  staffId     Int
+  date        DateTime // Ngày chấm công
+  checkIn     DateTime? // Giờ vào
+  checkOut    DateTime? // Giờ ra (nullable vì có thể chưa ra)
+  status      AttendanceStatus @default(PRESENT)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  staff       Staff    @relation(fields: [staffId], references: [id])
+  @@unique([staffId, date]) // Mỗi nhân viên chỉ có một bảng ghi mỗi ngày
+}

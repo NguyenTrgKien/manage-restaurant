@@ -1,0 +1,361 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import "tailwindcss";
+
+.text-primary {
+  color: rgb(0, 236, 0);
+}
+
+.text-primary-bold {
+  color: rgb(0, 109, 0);
+}
+
+.bg-primary {
+  background-color: rgb(0, 177, 0);
+  text-decoration: dotted;
+}
+
+.hv-linear {
+  transition: all linear 0.3s;
+}
+
+.maxlineThree {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.maxlineOne {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.maxlineTwo {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.removeScrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 62.5%;
+  font-family: "Arial", sans-serif;
+}
+
+body {
+  font-size: 1.6rem;
+}
+
+input {
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .hidden-table-payment {
+    display: none;
+  }
+}
+
+.hv-btn-buy:hover {
+  box-shadow: 0 0 1.8rem rgb(174, 0, 0);
+}
+
+.hv-btn-cart:hover {
+  box-shadow: 0 0 2rem rgb(0, 151, 20);
+}
+
+.banner-clippath {
+  clip-path: circle(72% at 80% 100%);
+}
+
+.showTitle {
+  transform: translateX(-80%);
+  opacity: 0;
+  transition: all linear 1s;
+}
+
+.imgCircle {
+  transform: translateY(50%) rotate(-40deg);
+  opacity: 0;
+  transition: all linear 1s;
+}
+
+.showBtnBanner {
+  transform: translateY(8rem);
+  opacity: 0;
+  transition: all linear 0.8s;
+}
+
+.imgDishLinear {
+  background-image: linear-gradient(
+    to top left,
+    rgb(10, 136, 10),
+    rgb(113, 255, 113)
+  );
+}
+
+.scrollSnapType {
+  scroll-snap-type: x mandatory;
+}
+
+.scrollSnapItem {
+  scroll-snap-align: center;
+}
+
+.center {
+  background-color: red;
+}
+
+.shadowImg {
+  filter: drop-shadow(10px 10px 5px rgba(0, 0, 0, 0.5));
+}
+
+.linearLogin {
+  background: linear-gradient(135deg, #43ff91, #1abcb7);
+}
+
+.loginClippath {
+  clip-path: circle(90.6% at 0 49%);
+}
+.loginClippathChange {
+  clip-path: circle(50% at 50% 50%);
+}
+.registerClippath {
+  clip-path: circle(85.4% at 100% 51%);
+}
+
+.linearItem2 {
+  /* background-image: linear-gradient(to top left, rgb(163, 9, 55),rgb(237, 167, 29)); */
+  background: linear-gradient(135deg, #ff5733, #ffc300);
+  transition: all linear 0.3s;
+  /* background: linear-gradient(135deg, #8B4513, #D2691E, #FFD700); */
+  /* background: linear-gradient(135deg, #9a0000, #FFD700); */
+}
+
+.linearItem2:hover {
+  background: linear-gradient(135deg, #ffc300, #ff5733);
+  transform: scale(1.05);
+}
+
+.colorTitle {
+  background: linear-gradient(135deg, #06b809, #cfa706);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.colorTitleLogin {
+  background: linear-gradient(135deg, #00c6fb, #005bea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.colorTitleRegister {
+  background: linear-gradient(135deg, #efcb16, #ff3236);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-hover {
+  background-color: linear-gradient(135deg, #e0431b, #e6a500);
+}
+
+.linearItem3 {
+  background-image: linear-gradient(
+    to top left,
+    rgb(27, 178, 60),
+    rgb(69, 255, 243)
+  );
+}
+
+.animationAll {
+  transition: all linear 0.8s;
+}
+
+.shadowMenu {
+  box-shadow: 0 0 4rem #8b8b8b;
+}
+
+.shadowMenu::before {
+  content: "";
+  position: absolute;
+  top: -2.4rem;
+  right: 4.8rem;
+  border-top: 1.5rem solid transparent;
+  border-left: 1.5rem solid transparent;
+  border-right: 1.5rem solid transparent;
+  border-bottom: 1.5rem solid #fff;
+}
+
+.shadowMenuAdmin {
+  box-shadow: 0 0 4rem #8b8b8b;
+}
+
+.shadowMenuAdmin::before {
+  content: "";
+  position: absolute;
+  top: -2.3rem;
+  left: 7rem;
+  border-top: 1.5rem solid transparent;
+  border-left: 1.5rem solid transparent;
+  border-right: 1.5rem solid transparent;
+  border-bottom: 1.5rem solid #fff;
+}
+
+.shadow-nav {
+  box-shadow: 0 0 4rem #868686;
+}
+
+input[type="date"] {
+  filter: brightness(150%);
+  border: 1px solid rgb(120, 120, 120);
+}
+
+.arrowCart::before {
+  content: "";
+  position: absolute;
+  top: -3.4rem;
+  right: 10.4rem;
+  border-top: 2rem solid transparent;
+  border-left: 2rem solid transparent;
+  border-bottom: 2rem solid rgb(255, 255, 255);
+  border-right: 2rem solid transparent;
+}
+
+.swiper-slide-shadow-left,
+.swiper-slide-shadow-right {
+  display: none !important;
+}
+
+.btn-green {
+  /* background: linear-gradient(135deg, #00c6ff, #0072ff); */
+  background: linear-gradient(135deg, #279aff, #00f2fe);
+  transition: all linear 0.3s;
+}
+
+.btn-green:hover {
+  background: linear-gradient(135deg, #00f2fe, #279aff);
+  transform: scale(1.05);
+}
+
+.rotateInfinite {
+  animation: diceSpin linear 3s infinite;
+}
+
+.infiniteImgBanner {
+  animation: imgBannerSpin linear 10s infinite;
+}
+
+@keyframes imgBannerSpin {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes diceSpin {
+  from {
+    transform: rotateX(0) rotateY(0);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+}
+
+.loadingCircle {
+  animation: circleSpin linear 1.8s infinite;
+}
+
+@keyframes circleSpin {
+  0% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  .banner-clippath {
+    clip-path: circle(58.3% at 100% 52%);
+  }
+}
+
+@media (max-width: 768px) {
+  .linearItemMobile {
+    background: linear-gradient(135deg, #ff5733, #ffc300);
+  }
+
+  .shadowMenu::before {
+    content: "";
+    position: absolute;
+    top: -2.4rem;
+    left: 8.2rem;
+    border-top: 1.5rem solid transparent;
+    border-left: 1.5rem solid transparent;
+    border-right: 1.5rem solid transparent;
+    border-bottom: 1.5rem solid #fff;
+  }
+}
+
+@media (max-width: 1380px) {
+  .loginClippath {
+    clip-path: circle(82.9% at 0 50%);
+  }
+}
+
+@media (max-width: 1225px) {
+  .loginClippath {
+    clip-path: circle(72.1% at 0 50%);
+  }
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 0.1rem solid rgb(0, 167, 167);
+  font-size: 1rem;
+  transition: all 0.2s linear;
+}
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+  transform: scale(1.1);
+}
+
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  color: rgb(0, 167, 167);
+  font-size: 2rem;
+}
+
+.shadow-app-footer:hover {
+  box-shadow: 0 0 30px cyan;
+  transition: all linear 0.25s;
+}
+
+.shadow-not-found:hover {
+  box-shadow: 0 0 8rem rgb(1, 124, 255);
+  transition: all linear 0.25s;
+}

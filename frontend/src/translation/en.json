@@ -1,0 +1,11 @@
+{
+    "header": {
+        "home": "Home Page",
+        "menu": "Menu",
+        "order": "Order",
+        "introduce": "Introduce",
+        "contact": "Contact",
+        "language": "Language",
+        "login": "Login"
+    }
+}
