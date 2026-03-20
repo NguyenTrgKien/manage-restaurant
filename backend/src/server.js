@@ -9,7 +9,12 @@ import swaggerUi from "swagger-ui-express";
 
 dotenv.config(); // Nạp tất cả các biến môi trường vào process.env
 const corsOption = {
-  origin: ["http://localhost:5173", "http://localhost:5174"], // Đường dẫn cho phép
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://manage-restaurant-eight.vercel.app",
+    "https://manage-restaurant-h8yjl1x6o-nguyentrgkiens-projects.vercel.app",
+  ], // Đường dẫn cho phép
   credentials: true, // Cho phép gửi cookie từ frontend
 };
 
