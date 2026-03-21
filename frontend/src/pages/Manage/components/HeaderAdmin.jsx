@@ -4,15 +4,35 @@ import { useAuth } from "../../../hooks/useAuth";
 import avatarDefault from "../../../assets/image/avataDefault.png";
 import { sidebarList } from "./SidebarAdmin";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function HeaderAdmin() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const elementRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutSide = (e) => {
+      if (elementRef.current && !elementRef.current.contains(e.target)) {
+        setShowPopup(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutSide);
+    return () => {
+      document.removeEventListener("click", handleClickOutSide);
+    };
+  }, []);
+
   return (
     <div className="fixed top-0 right-0 left-0 md:left-[25rem] flex items-center md:justify-end justify-between h-[6rem] px-12 bg-white shadow-sm z-[100]">
-      <button type="button" onClick={() => setShowMenu(true)}>
+      <button
+        type="button"
+        className="md:hidden block"
+        onClick={() => setShowMenu(true)}
+      >
         <FontAwesomeIcon
           icon={faBars}
           className="text-[1.8rem] text-gray-800"
@@ -20,12 +40,35 @@ function HeaderAdmin() {
       </button>
       <div className="flex items-center gap-10">
         <FontAwesomeIcon icon={faBell} className="text-[2rem]" />
-        <div className="w-[4rem] h-[4rem] rounded-full border cursor-pointer border-gray-300 overflow-hidden">
+        <div
+          ref={elementRef}
+          className="relative w-[4rem] h-[4rem] rounded-full border cursor-pointer border-gray-300"
+          onClick={() => setShowPopup(true)}
+        >
           <img
             src={user?.avatar ?? avatarDefault}
             alt="avatar"
             className="w-full h-full rounded-full object-cover"
           />
+          {showPopup && (
+            <div className="absolute z-[400] top-[calc(100%+1rem)] right-0 w-[15rem] h-auto p-6 space-y-6 bg-white shadow-xl rounded-xl">
+              <div
+                className="text-nowrap hover:cursor-pointer"
+                onClick={() => setShowPopup(false)}
+              >
+                Tài khoản
+              </div>
+              <div
+                className="text-nowrap text-red-500 hover:cursor-pointer"
+                onClick={() => {
+                  setShowPopup(false);
+                  logout();
+                }}
+              >
+                Đăng xuất
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {showMenu && (

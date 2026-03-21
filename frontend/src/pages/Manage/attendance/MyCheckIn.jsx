@@ -11,50 +11,59 @@ function MyCheckIn() {
   const scannerRef = useRef(null);
 
   useEffect(() => {
-    if (isScanning) {
-      setResult(null);
-      scannerRef.current = new Html5Qrcode("qr-reader");
-      scannerRef.current
-        .start(
-          {
-            facingMode: "environment",
-          },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          async (decodedText) => {
-            await scannerRef.current.stop();
-            setIsScanning(false);
-            await handleScan(decodedText);
-          },
-        )
-        .catch(() => setIsScanning(false));
-    }
+    if (!isScanning) return;
+    setResult(null);
+    const scanner = new Html5Qrcode("qr-reader");
+    scannerRef.current = scanner;
+    scanner
+      .start(
+        {
+          facingMode: "environment",
+        },
+        { fps: 30, qrbox: 250 },
+        async (decodedText, decodedResult) => {
+          console.log("Đọc được qr:", decodedText);
+          console.log("Đọc được qr:", decodedResult);
+
+          try {
+            await scanner.stop();
+          } catch (error) {}
+          setIsScanning(false);
+
+          try {
+            setIsSubmitting(true);
+            const res = await scanQr(decodedText);
+
+            if (res.status === 200) {
+              setResult({
+                success: true,
+                type: res.data.type,
+                message: res.data.message,
+              });
+            }
+          } catch (error) {
+            setResult({
+              success: false,
+              message: error.response?.data?.message || "Có lỗi xãy ra!",
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+      )
+      .then(() => console.log("Camera started"))
+      .catch((error) => {
+        console.error("Không thể mở camera:", error);
+        setIsScanning(false);
+      });
+    // return () => {
+    //   scanner.stop().catch(() => {});
+    // };
   }, [isScanning]);
 
   const stopScan = async () => {
-    if (scannerRef && scannerRef.current) await scannerRef.current.stop();
+    if (scannerRef.current) await scannerRef.current.stop();
     setIsScanning(false);
-  };
-
-  const handleScan = async (qrToken) => {
-    try {
-      setIsSubmitting(true);
-      const res = await scanQr(qrToken);
-
-      if (res.status === 200) {
-        setResult({
-          success: true,
-          type: res.data.type,
-          message: res.data.message,
-        });
-      }
-    } catch (error) {
-      setResult({
-        success: false,
-        message: err.response?.data?.message || "Có lỗi xãy ra!",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const now = new Date();
@@ -70,7 +79,7 @@ function MyCheckIn() {
           {today}, {dayjs(now).format("DD/MM/YYYY")}
         </p>
       </div>
-      <div className="text-center">
+      <div className="text-center mb-6">
         {result && (
           <div
             className={`w-full max-w-[40rem] mx-auto p-[2rem] rounded-[1.2rem] text-center text-[1.4rem] md:text-[1.8rem] font-medium ${
@@ -84,7 +93,7 @@ function MyCheckIn() {
         )}
 
         {isScanning && (
-          <div className="w-full max-w-[40rem] mx-auto">
+          <div className="w-full max-w-[40rem] mx-auto mb-6">
             <div
               id="qr-reader"
               className="w-full rounded-[1.2rem] overflow-hidden"
@@ -102,7 +111,7 @@ function MyCheckIn() {
           <button
             onClick={() => setIsScanning(true)}
             disabled={isSubmitting}
-            className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60"
+            className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60 mb-6"
           >
             {isSubmitting ? "Đang xử lý..." : "Quét mã QR"}
           </button>
@@ -111,7 +120,7 @@ function MyCheckIn() {
         {result?.success && (
           <button
             onClick={() => setResult(null)}
-            className="text-[1.4rem] md:text-[1.6rem] text-gray-400 underline"
+            className="text-[1.4rem] md:text-[1.6rem] text-gray-400 underline mb-6"
           >
             Quét lại
           </button>

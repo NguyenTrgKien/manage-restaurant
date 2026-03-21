@@ -16,14 +16,11 @@ const DAYS = [
 
 function CheckIn() {
   const [timeLeft, setTimeLeft] = useState(300);
-  const {
-    data: qrToken,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: resQrToken, isLoading } = useQuery({
     queryKey: ["qrToken"],
     queryFn: getQrToken,
   });
+  const qrToken = resQrToken?.data?.data ?? null;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -57,7 +54,7 @@ function CheckIn() {
           <div className="w-[30rem] h-[30rem] mx-auto border border-gray-300 bg-gray-100 animate-pulse rounded-xl"></div>
         ) : (
           <div className="w-[30rem] h-[30rem] mx-auto border border-gray-300 rounded-xl">
-            {
+            {qrToken ? (
               <QRCodeCanvas
                 value={qrToken}
                 size={300}
@@ -67,7 +64,11 @@ function CheckIn() {
                   borderRadius: "1rem",
                 }}
               />
-            }
+            ) : (
+              <div className="w-[30rem] h-[30rem] flex items-center justify-center">
+                Không thể tải mã qr
+              </div>
+            )}
           </div>
         )}
         <div className="text-center text-gray-600">

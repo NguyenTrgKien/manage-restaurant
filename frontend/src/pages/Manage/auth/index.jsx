@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import axiosInstance from "../../../configs/axiosInstance";
+import { useAuth } from "../../../hooks/useAuth";
 
 function LoginAdmin() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState({
@@ -35,12 +36,9 @@ function LoginAdmin() {
     }
 
     try {
-      const res = await axiosInstance.post("/api/v1/login", {
-        email: email,
-        password: password,
-      });
+      const success = await login(email, password);
 
-      if (res.status === 200) {
+      if (success) {
         navigate("/manage");
       }
     } catch (error) {
