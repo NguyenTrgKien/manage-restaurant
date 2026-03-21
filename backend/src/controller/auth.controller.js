@@ -1,8 +1,5 @@
 import authService from "../services/auth.service.js";
-import { PrismaClient } from "@prisma/client";
 import userService from "../services/user.service.js";
-
-const prisma = new PrismaClient();
 
 const authController = {
   getAllUser: async (req, res) => {
@@ -86,17 +83,15 @@ const authController = {
     }
   },
   handleLogOut: async (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi đăng xuất!",
-        });
-      }
-      res.clearCookie("connect.sid"); // Xóa cookie session
-      return res.status(200).json({
-        errCode: 0,
-        message: "Đăng xuất thành công!",
-      });
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    return res.status(200).json({
+      errCode: 0,
+      message: "Đăng xuất thành công!",
     });
   },
 };

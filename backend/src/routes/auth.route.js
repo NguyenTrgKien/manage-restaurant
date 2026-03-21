@@ -15,5 +15,5 @@ export default (router) => {
 
   router.post("/api/v1/user-register", authController.handleRegisterUser);
 
-  router.post("/api/v1/logout", authController.handleLogOut);
+  router.post("/api/v1/logout", verifyToken, authController.handleLogOut);
 };

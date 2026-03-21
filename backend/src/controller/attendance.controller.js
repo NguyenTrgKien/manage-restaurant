@@ -62,6 +62,7 @@ const attendanceController = {
     try {
       const staffId = req.user.id;
       const { qrToken } = req.body;
+      console.log("qrToken", qrToken);
 
       if (!qrToken) {
         return res.status(400).json({ errCode: 1, message: "Thiếu mã QR!" });
