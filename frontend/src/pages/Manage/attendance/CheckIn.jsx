@@ -20,7 +20,7 @@ function CheckIn() {
     queryKey: ["qrToken"],
     queryFn: getQrToken,
   });
-  const qrToken = resQrToken?.data?.data ?? null;
+  const qrToken = resQrToken?.data?.data?.token ?? null;
 
   useEffect(() => {
     const timer = setInterval(() => {
