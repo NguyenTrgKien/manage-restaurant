@@ -15,7 +15,7 @@ import Contact from "./pages/customer/Contact";
 import RedirectIfPayment from "./components/PaymentRedirect";
 import PrivateRoute from "./components/PrivateRoute";
 import MainDish from "./pages/Manage/MainDish";
-import LoginAdmin from "./pages/Manage/auth";
+import ADMIN from "./pages/Manage/auth";
 import Category from "./pages/Manage/category";
 import OrderDish from "./pages/Manage/Order";
 import OrderTable from "./pages/Manage/OrderTable";
@@ -62,23 +62,86 @@ function App() {
           </PrivateRoute>
         }
       >
-        <Route path="dish" element={<MainDish />} />
-        <Route path="category" element={<Category />} />
+        <Route
+          path="dish"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <MainDish />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="category"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <Category />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="staff"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <Staff />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="staff/action"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <ActionStaff />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="staff/action/:id"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <ActionStaff />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="timeframe"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <Timeframe />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="table"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <Table />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="attendance"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <Attendance />
+            </PrivateRoute>
+          }
+        />
+
+        {/* ADMIN + Staff */}
         <Route path="order-dish" element={<OrderDish />} />
         <Route path="order-dish/create" element={<CreateOrderDish />} />
         <Route path="order-table" element={<OrderTable />} />
         <Route path="order-table/detail/:id" element={<DetailOrderTable />} />
         <Route path="order-table/create" element={<CreateOrderTable />} />
-        <Route path="timeframe" element={<Timeframe />} />
-        <Route path="table" element={<Table />} />
-        <Route path="staff" element={<Staff />} />
-        <Route path="staff/action" element={<ActionStaff />} />
-        <Route path="staff/action/:id" element={<ActionStaff />} />
-        <Route path="attendance" element={<Attendance />} />
+
+        {/* Staff only */}
         <Route path="my-attendance" element={<MyCheckIn />} />
+
         <Route path="my-checkin" element={<MyCheckIn />} />
       </Route>
-      <Route path="manage/login" element={<LoginAdmin />} />
+
+      <Route path="manage/login" element={<ADMIN />} />
+      <Route path="/403" element={<div>Bạn không có quyền truy cập</div>} />
     </Routes>
   );
 }

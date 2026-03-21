@@ -28,30 +28,20 @@ export const MENU = {
   ATTENDANCE: "attendance",
   MYATTENDANCE: "my-attendance",
 };
-
 export const sidebarList = [
   {
     id: 1,
     title: "DashBoard",
     menuKey: MENU.DASHBOARD,
     icon: faChartLine,
-    role: null,
     children: [],
   },
-  {
-    id: 2,
-    title: "Thực đơn",
-    menuKey: MENU.DISH,
-    icon: faEject,
-    role: null,
-    children: [],
-  },
+  { id: 2, title: "Thực đơn", menuKey: MENU.DISH, icon: faEject, children: [] },
   {
     id: 3,
     title: "Danh mục",
     menuKey: MENU.CATEGORY,
     icon: faLayerGroup,
-    role: null,
     children: [],
   },
   {
@@ -59,7 +49,6 @@ export const sidebarList = [
     title: "Đơn hàng",
     menuKey: null,
     icon: faReceipt,
-    role: null,
     children: [
       { id: 41, title: "Đơn đặt món", menuKey: MENU.ORDER_DISH },
       { id: 42, title: "Đơn đặt bàn", menuKey: MENU.ORDER_TABLE },
@@ -70,23 +59,14 @@ export const sidebarList = [
     title: "Nhân viên",
     menuKey: MENU.STAFF,
     icon: faUser,
-    role: "ADMIN",
     children: [],
   },
-  {
-    id: 6,
-    title: "Bàn",
-    menuKey: MENU.TABLE,
-    icon: faEthernet,
-    role: null,
-    children: [],
-  },
+  { id: 6, title: "Bàn", menuKey: MENU.TABLE, icon: faEthernet, children: [] },
   {
     id: 7,
     title: "Khách hàng",
     menuKey: MENU.CUSTOMER,
     icon: faUsers,
-    role: "ADMIN",
     children: [],
   },
   {
@@ -94,7 +74,6 @@ export const sidebarList = [
     title: "Khung giờ",
     menuKey: MENU.TIMEFRAME,
     icon: faLock,
-    role: "ADMIN",
     children: [],
   },
   {
@@ -102,18 +81,20 @@ export const sidebarList = [
     title: "Chấm công",
     menuKey: MENU.ATTENDANCE,
     icon: faLock,
-    role: "ADMIN",
     children: [],
   },
   {
     id: 10,
-    title: "Chấm công",
+    title: "Chấm công của tôi",
     menuKey: MENU.MYATTENDANCE,
     icon: faLock,
-    role: "ADMIN",
     children: [],
   },
 ];
+
+const ADMIN_ONLY = [MENU.STAFF, MENU.CUSTOMER, MENU.TIMEFRAME, MENU.ATTENDANCE];
+
+const STAFF_ONLY = [MENU.MYATTENDANCE];
 
 function SidebarAdmin({
   currentContent,
@@ -128,7 +109,6 @@ function SidebarAdmin({
   const toggleDropdown = (id) =>
     setOpenDropdownId((prev) => (prev === id ? null : id));
 
-  // Item Thực đơn (id=2): inject category từ API
   const getChildren = (item) =>
     item.id === 2 && listCategory?.data?.length > 0
       ? listCategory.data
@@ -137,9 +117,11 @@ function SidebarAdmin({
   const isItemActive = (item) => currentContent === item.menuKey;
   const isGroupActive = (item) =>
     item.children.some((c) => currentContent === c.menuKey);
-  const visibleItems = sidebarList.filter(
-    (item) => !item.role || item.role === user?.role,
-  );
+  const visibleItems = sidebarList.filter((item) => {
+    if (ADMIN_ONLY.includes(item.menuKey)) return user?.role === "admin";
+    if (STAFF_ONLY.includes(item.menuKey)) return user?.role === "staff";
+    return true;
+  });
 
   return (
     <div className="fixed hidden md:block top-0 left-0 w-[25rem] h-[100vh] bg-white border border-gray-200 ">

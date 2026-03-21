@@ -10,6 +10,7 @@ export default function AuthProvider({ children }) {
   const fetchUser = async () => {
     try {
       const res = await axiosInstance.get("/api/v1/auth/me");
+
       if (res.status === 200) {
         setUser(res.data.user);
         return;

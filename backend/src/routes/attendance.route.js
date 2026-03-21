@@ -1,4 +1,5 @@
 import attendanceController from "../controller/attendance.controller.js";
+import verifyToken from "../middlewares/authMiddleware.js";
 
 export default (router) => {
   router.get("/api/v1/attendance", attendanceController.getAttendanceByDate);
@@ -23,5 +24,15 @@ export default (router) => {
     attendanceController.generateQRToken,
   );
 
-  router.post("/api/v1/attendance/scan", attendanceController.scanQR);
+  router.post(
+    "/api/v1/attendance/scan",
+    verifyToken,
+    attendanceController.scanQR,
+  );
+
+  router.get(
+    "/api/v1/attendance/today",
+    verifyToken,
+    attendanceController.checkAttendanceToday,
+  );
 };

@@ -32,3 +32,7 @@ export const scanQr = async (qrToken) => {
     qrToken,
   });
 };
+
+export const checkAttendance = async () => {
+  return await axiosInstance.get("/api/v1/attendance/today");
+};

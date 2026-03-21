@@ -335,6 +335,68 @@ const attendanceService = {
       throw new Error("Lỗi server!");
     }
   },
+
+  checkAttendanceToday: async (staffId) => {
+    try {
+      const today = new Date();
+      const staff = await prisma.user.findUnique({
+        where: {
+          id: Number(staffId),
+        },
+      });
+
+      if (!staff) {
+        return {
+          errCode: 1,
+          message: "Không tìm thấy người dùng này!",
+        };
+      }
+
+      const attendance = await prisma.attendance.findUnique({
+        where: {
+          staffId_date: {
+            staffId: staffId,
+            date: startOfDay(today),
+          },
+        },
+      });
+
+      if (!attendance) {
+        return {
+          errCode: 0,
+          status: "not_checked_in",
+          message: "Bạn chưa chấm công hôm nay",
+          data: null,
+        };
+      }
+
+      if (attendance.checkIn && !attendance.checkOut) {
+        return {
+          errCode: 0,
+          status: "checked_in",
+          message: "Bạn đã check-in, chưa check-out",
+          data: {
+            checkIn: attendance.checkIn,
+            checkOut: null,
+          },
+        };
+      }
+
+      if (attendance.checkIn && attendance.checkOut) {
+        return {
+          errCode: 0,
+          status: "completed",
+          message: "Bạn đã hoàn thành chấm công hôm nay",
+          data: {
+            checkIn: attendance.checkIn,
+            checkOut: attendance.checkOut,
+          },
+        };
+      }
+    } catch (error) {
+      throw new Error("Lỗi server!");
+    }
+  },
 };
 
 export default attendanceService;

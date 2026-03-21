@@ -64,6 +64,8 @@ const staffService = {
         data: result,
       };
     } catch (error) {
+      console.log(error);
+
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }

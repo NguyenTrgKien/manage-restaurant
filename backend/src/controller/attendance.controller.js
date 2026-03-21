@@ -62,13 +62,22 @@ const attendanceController = {
     try {
       const staffId = req.user.id;
       const { qrToken } = req.body;
-      console.log("qrToken", qrToken);
 
       if (!qrToken) {
         return res.status(400).json({ errCode: 1, message: "Thiếu mã QR!" });
       }
 
       const result = await attendanceService.scanQR(staffId, qrToken);
+      return res.status(result.errCode === 0 ? 200 : 400).json(result);
+    } catch (error) {
+      return res.status(500).json({ errCode: -1, message: "Server Error!" });
+    }
+  },
+  checkAttendanceToday: async (req, res) => {
+    try {
+      const staffId = req.user.id;
+
+      const result = await attendanceService.checkAttendanceToday(staffId);
       return res.status(result.errCode === 0 ? 200 : 400).json(result);
     } catch (error) {
       return res.status(500).json({ errCode: -1, message: "Server Error!" });

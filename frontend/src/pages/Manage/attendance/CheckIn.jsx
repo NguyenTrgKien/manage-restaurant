@@ -19,6 +19,8 @@ function CheckIn() {
   const { data: resQrToken, isLoading } = useQuery({
     queryKey: ["qrToken"],
     queryFn: getQrToken,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
   const qrToken = resQrToken?.data?.data?.token ?? null;
 

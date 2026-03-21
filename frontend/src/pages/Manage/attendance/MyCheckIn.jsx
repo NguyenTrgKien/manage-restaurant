@@ -1,14 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { scanQr } from "../../../apis/attendance.api";
+import { checkAttendance, scanQr } from "../../../apis/attendance.api";
 import { DAYS } from ".";
 import dayjs from "dayjs";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 function MyCheckIn() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scannerRef = useRef(null);
+  const queryClient = useQueryClient();
+  let isStopped = false;
+
+  const { data: resCheckAttendance, isLoading } = useQuery({
+    queryKey: ["checkAttendance"],
+    queryFn: checkAttendance,
+  });
+
+  const todayStatus = resCheckAttendance?.data?.status;
+  const todayData = resCheckAttendance?.data?.data;
+  const isDone = todayStatus === "completed";
+  const canScan =
+    todayStatus === "not_checked_in" || todayStatus === "checked_in";
 
   useEffect(() => {
     if (!isScanning) return;
@@ -21,12 +35,10 @@ function MyCheckIn() {
           facingMode: "environment",
         },
         { fps: 30, qrbox: 250 },
-        async (decodedText, decodedResult) => {
-          console.log("Đọc được qr:", decodedText);
-          console.log("Đọc được qr:", decodedResult);
-
+        async (decodedText) => {
           try {
             await scanner.stop();
+            isStopped = true;
           } catch (error) {}
           setIsScanning(false);
 
@@ -40,6 +52,7 @@ function MyCheckIn() {
                 type: res.data.type,
                 message: res.data.message,
               });
+              queryClient.invalidateQueries({ queryKey: ["checkAttendance"] });
             }
           } catch (error) {
             setResult({
@@ -51,18 +64,24 @@ function MyCheckIn() {
           }
         },
       )
-      .then(() => console.log("Camera started"))
       .catch((error) => {
-        console.error("Không thể mở camera:", error);
         setIsScanning(false);
       });
-    // return () => {
-    //   scanner.stop().catch(() => {});
-    // };
+    return () => {
+      if (!isStopped) {
+        isStopped = true;
+        scanner.stop().catch(() => {});
+      }
+    };
   }, [isScanning]);
 
   const stopScan = async () => {
-    if (scannerRef.current) await scannerRef.current.stop();
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {}
+      scannerRef.current = null;
+    }
     setIsScanning(false);
   };
 
@@ -79,53 +98,90 @@ function MyCheckIn() {
           {today}, {dayjs(now).format("DD/MM/YYYY")}
         </p>
       </div>
-      <div className="text-center mb-6">
-        {result && (
-          <div
-            className={`w-full max-w-[40rem] mx-auto p-[2rem] rounded-[1.2rem] text-center text-[1.4rem] md:text-[1.8rem] font-medium ${
-              result.success
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-600 border border-red-200"
-            }`}
-          >
-            {result.success ? "✓" : "✗"} {result.message}
+
+      {isLoading ? (
+        <div className="text-center">Loading...</div>
+      ) : (
+        <>
+          <div className="w-full max-w-[40rem] mx-auto p-[1.6rem] rounded-xl bg-white shadow-md border border-gray-200 text-[1.4rem] md:text-[1.6rem] space-y-2">
+            <p className="font-medium text-gray-700">Trạng thái hôm nay:</p>
+            <p>
+              Check-in:{" "}
+              {todayData?.checkIn ? (
+                <span className="text-green-600 font-medium">
+                  {dayjs(todayData.checkIn).format("HH:mm")}
+                </span>
+              ) : (
+                <span className="text-gray-400">Chưa chấm công</span>
+              )}
+            </p>
+            <p>
+              Check-out:{" "}
+              {todayData?.checkOut ? (
+                <span className="text-green-600 font-medium">
+                  ✓ {dayjs(todayData.checkOut).format("HH:mm")}
+                </span>
+              ) : (
+                <span className="text-gray-400">Chưa chấm công</span>
+              )}
+            </p>
           </div>
-        )}
 
-        {isScanning && (
-          <div className="w-full max-w-[40rem] mx-auto mb-6">
-            <div
-              id="qr-reader"
-              className="w-full rounded-[1.2rem] overflow-hidden"
-            />
-            <button
-              onClick={stopScan}
-              className="w-full mt-4 py-[1.2rem] rounded-[.8rem] border border-gray-300 text-[1.4rem] md:text-[1.8rem] text-gray-600"
-            >
-              Huỷ
-            </button>
+          <div className="text-center mb-6">
+            {result && (
+              <div
+                className={`w-full max-w-[40rem] mx-auto p-[2rem] rounded-[1.2rem] text-center text-[1.4rem] md:text-[1.8rem] font-medium ${
+                  result.success
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-600 border border-red-200"
+                }`}
+              >
+                {result.success ? "✓" : "✗"} {result.message}
+              </div>
+            )}
+
+            {isScanning && (
+              <div className="w-full max-w-[40rem] mx-auto mb-6">
+                <div
+                  id="qr-reader"
+                  className="w-full rounded-[1.2rem] overflow-hidden"
+                />
+                <button
+                  onClick={stopScan}
+                  className="w-full mt-4 py-[1.2rem] rounded-[.8rem] border border-gray-300 text-[1.4rem] md:text-[1.8rem] text-gray-600"
+                >
+                  Huỷ
+                </button>
+              </div>
+            )}
+
+            {!isScanning && (
+              <button
+                onClick={() => setIsScanning(true)}
+                disabled={isSubmitting || isDone || !canScan}
+                className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60 mb-6"
+              >
+                {isSubmitting
+                  ? "Đang xử lý..."
+                  : isDone
+                    ? "Đã hoàn thành chấm công"
+                    : todayStatus === "checked_in"
+                      ? "Quét mã để checkout"
+                      : "Quét mã QR"}
+              </button>
+            )}
+
+            {result?.success && !isDone && (
+              <button
+                onClick={() => setResult(null)}
+                className="text-[1.4rem] md:text-[1.6rem] text-gray-400 underline mb-6"
+              >
+                Quét lại
+              </button>
+            )}
           </div>
-        )}
-
-        {!isScanning && (
-          <button
-            onClick={() => setIsScanning(true)}
-            disabled={isSubmitting}
-            className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60 mb-6"
-          >
-            {isSubmitting ? "Đang xử lý..." : "Quét mã QR"}
-          </button>
-        )}
-
-        {result?.success && (
-          <button
-            onClick={() => setResult(null)}
-            className="text-[1.4rem] md:text-[1.6rem] text-gray-400 underline mb-6"
-          >
-            Quét lại
-          </button>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
