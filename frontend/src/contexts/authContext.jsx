@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import axiosInstance from "../configs/axiosInstance";
 import { toast } from "react-toastify";
+
 export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
@@ -8,6 +9,11 @@ export default function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const res = await axiosInstance.get("/api/v1/auth/me");
 
@@ -22,32 +28,14 @@ export default function AuthProvider({ children }) {
     }
   };
 
-  const login = async (email, password) => {
-    try {
-      const res = await axiosInstance.post("/api/v1/login", {
-        email: email,
-        password: password,
-      });
-      if (res.status === 200) {
-        await fetchUser();
-        return true;
-      }
-    } catch (error) {
-      toast.error(error.message);
-      return false;
-    }
-  };
-
   const logout = async () => {
     try {
-      const res = await axiosInstance.post("/api/v1/logout");
-      if (res.status === 200) {
-        setUser(null);
-        return true;
-      }
+      await axiosInstance.post("/api/v1/logout");
     } catch (error) {
       toast.error(error.message);
-      return false;
+    } finally {
+      setUser(null);
+      localStorage.removeItem("access_token");
     }
   };
 
@@ -56,7 +44,7 @@ export default function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, fetchUser, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, fetchUser, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

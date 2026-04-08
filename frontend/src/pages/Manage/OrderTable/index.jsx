@@ -151,7 +151,7 @@ function AddFoodModal({ orderTable, onClose, onSuccess }) {
       <div className="w-[90rem] max-w-[95vw] h-[85vh] bg-white rounded-[1rem] shadow-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-[2.5rem] py-[1.8rem] border-b border-gray-200 flex-shrink-0">
           <div>
-            <h3 className="text-[1.8rem] font-semibold text-gray-800 flex items-center gap-[.8rem]">
+            <h3 className="text-[1.8rem]  text-gray-800 flex items-center gap-[.8rem]">
               <FontAwesomeIcon icon={faUtensils} className="text-cyan-500" />
               Thêm món — Đơn #{orderTable.id}
             </h3>
@@ -258,7 +258,7 @@ function AddFoodModal({ orderTable, onClose, onSuccess }) {
           </div>
           <div className="w-[30rem] flex-shrink-0 flex flex-col">
             <div className="px-[2rem] py-[1.5rem] border-b border-gray-100 flex-shrink-0">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <h4 className="text-[1.6rem]  text-gray-700 flex items-center gap-[.8rem]">
                 <FontAwesomeIcon
                   icon={faShoppingCart}
                   className="text-cyan-500"
@@ -343,7 +343,7 @@ function AddFoodModal({ orderTable, onClose, onSuccess }) {
               {cart.length > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-[1.5rem] text-gray-600">Tổng cộng</span>
-                  <span className="text-[1.8rem] font-semibold text-red-500">
+                  <span className="text-[1.8rem]  text-red-500">
                     {Number(totalAmount).toLocaleString("vi-VN")}đ
                   </span>
                 </div>
@@ -452,9 +452,7 @@ function OrderTable() {
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-[2.2rem] font-semibold text-gray-800">
-            Quản lý đơn đặt bàn
-          </h3>
+          <h3 className="text-[2.2rem]  text-gray-800">Quản lý đơn đặt bàn</h3>
           <p className="text-gray-500">
             Quản lý toàn bộ đơn đặt bàn của nhà hàng.
           </p>

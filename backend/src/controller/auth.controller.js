@@ -20,25 +20,16 @@ const authController = {
       const { email, password } = req.body;
       const result = await authService.login(email, password);
 
-      if (result.errCode === 0) {
-        const access_token = result.access_token;
-
-        res.cookie("access_token", access_token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          maxAge: 24 * 60 * 60 * 1000,
-        });
-      }
-
-      return res
-        .status(200)
-        .json({ message: "Đăng nhập thành công!", user: result.user });
+      return res.status(200).json({
+        message: "Đăng nhập thành công!",
+        user: result.user,
+        access_token: result.access_token,
+      });
     } catch (error) {
       console.log(error);
-      return res.status(500).json({
+      return res.status(error.statusCode || 500).json({
         errCode: -1,
-        message: "Server Error!",
+        message: error.message || "Server Error!",
       });
     }
   },
@@ -58,17 +49,19 @@ const authController = {
     }
   },
   getMe: async (req, res) => {
-    const token = req.user;
-    const user = await userService.getUserById(token.id);
-    if (!user) {
-      return res.status(404).json({
-        message: "Không tìm thấy người dùng này!",
+    try {
+      const token = req.user;
+      const user = await userService.getUserById(token.id);
+      const { password, ...result } = user;
+      return res.status(200).json({
+        user: result,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(error.status || 500).json({
+        message: error.message || "Lỗi server",
       });
     }
-    const { password, ...result } = user;
-    return res.status(200).json({
-      user: result,
-    });
   },
   handleRegisterUser: async (req, res) => {
     try {

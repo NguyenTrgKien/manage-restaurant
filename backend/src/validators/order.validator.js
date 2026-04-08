@@ -12,16 +12,11 @@ export const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-export const validateCreateOrder = [
-  body("userId")
+export const validateCreateOrderDish = [
+  body("customerId")
     .optional()
     .isInt({ min: 1 })
     .withMessage("userId phải là số nguyên dương"),
-
-  body("orderTableId")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("orderTableId phải là số nguyên dương"),
 
   body("fullName")
     .optional()
@@ -30,26 +25,109 @@ export const validateCreateOrder = [
     .isLength({ max: 100 })
     .withMessage("fullName không được quá 100 ký tự"),
 
-  body("paymentMethod")
+  body("phoneNumber")
     .optional()
-    .isIn(["CASH", "MOMO", "BANKING"])
+    .isString()
+    .trim()
+    .isLength({ max: 10 })
+    .withMessage("phoneNumber không được quá 10 kí số!"),
+
+  body("paymentMethod")
+    .isIn(["cash", "momo"])
     .withMessage("paymentMethod không hợp lệ"),
 
-  body("items")
-    .isArray({ min: 1 })
-    .withMessage("items phải là mảng và không được rỗng"),
+  body("totalAmount")
+    .isFloat({ gt: 0 })
+    .withMessage("totalAmount phải lớn hơn 0!"),
 
-  body("items.*.foodId")
+  body("note").optional(),
+
+  body("orderItems")
+    .isArray({ min: 1 })
+    .withMessage("orderItems phải là mảng và không được rỗng"),
+
+  body("orderItems.*.foodId")
     .isInt({ min: 1 })
     .withMessage("foodId phải là số nguyên dương"),
 
-  body("items.*.quantity")
+  body("orderItems.*.quantity")
     .isInt({ min: 1 })
     .withMessage("quantity phải là số nguyên dương"),
 
   body().custom((_, { req }) => {
-    if (!req.body.userId && !req.body.fullName) {
-      throw new Error("Phải cung cấp userId hoặc fullName");
+    if (!req.body.customerId && !req.body.fullName) {
+      throw new Error("Phải cung cấp customerId hoặc fullName");
+    }
+    return true;
+  }),
+];
+
+export const validateCreateOrderTable = [
+  body("customerId")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("customerId phải là số nguyên dương"),
+
+  body("tableId")
+    .isInt({ min: 1 })
+    .withMessage("tableId phải là số nguyên dương"),
+
+  body("fullName")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage("fullName không được quá 100 ký tự"),
+
+  body("phoneNumber")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 10 })
+    .withMessage("phoneNumber không được quá 10 kí số!"),
+
+  body("numberGuests")
+    .isInt({ min: 0 })
+    .withMessage("Số khách phải lớn hơn 0!"),
+
+  body("note").optional(),
+
+  body("paymentMethod")
+    .optional()
+    .isIn(["cash", "momo"])
+    .withMessage("paymentMethod không hợp lệ"),
+
+  body("orderDate")
+    .isISO8601()
+    .toDate()
+    .custom((value) => {
+      const now = new Date();
+      const maxDate = new Date();
+      maxDate.setDate(now.getDate() + 10);
+
+      if (value > maxDate) {
+        throw new Error("Không thể đặt bàn quá 10 ngày!");
+      }
+      return true;
+    })
+    .withMessage("orderDate không hợp lệ!"),
+
+  body("orderItems")
+    .optional()
+    .isArray({ min: 1 })
+    .withMessage("items phải là mảng và không được rỗng"),
+
+  body("orderItems.*.foodId")
+    .isInt({ min: 1 })
+    .withMessage("foodId phải là số nguyên dương"),
+
+  body("orderItems.*.quantity")
+    .isInt({ min: 1 })
+    .withMessage("quantity phải là số nguyên dương"),
+
+  body().custom((_, { req }) => {
+    if (!req.body.customerId && !req.body.fullName) {
+      throw new Error("Phải cung cấp customerId hoặc fullName");
     }
     return true;
   }),

@@ -139,7 +139,7 @@ function OrderDish() {
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-[2.2rem] font-semibold text-gray-800">
+          <h3 className="text-[2.2rem]  text-gray-800">
             Quản lý đơn đặt món
           </h3>
           <p className="text-gray-500">

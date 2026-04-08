@@ -54,15 +54,11 @@ function Stats({ stats }) {
     <div className="grid grid-cols-4 gap-[1.2rem]">
       <div className="bg-gray-100 shadow-sm rounded-[.8rem] p-[1.4rem]">
         <p className="text-[1.6rem] text-gray-500 mb-[.6rem]">Tổng nhân viên</p>
-        <p className="text-[2.5rem] font-semibold text-gray-800">
-          {stats.total}
-        </p>
+        <p className="text-[2.5rem]  text-gray-800">{stats.total}</p>
       </div>
       <div className="bg-gray-100 shadow-sm rounded-[.8rem] p-[1.4rem]">
         <p className="text-[1.6rem] text-gray-500 mb-[.6rem]">Đang làm việc</p>
-        <p className="text-[2.5rem] font-semibold text-green-700">
-          {stats.working}
-        </p>
+        <p className="text-[2.5rem]  text-green-700">{stats.working}</p>
         <p className="text-[1.2rem] text-gray-500 mt-[.4rem]">
           {stats.total ? Math.round((stats.working / stats.total) * 100) : 0}%
           tổng nhân viên
@@ -70,9 +66,7 @@ function Stats({ stats }) {
       </div>
       <div className="bg-gray-100 shadow-sm rounded-[.8rem] p-[1.4rem]">
         <p className="text-[1.6rem] text-gray-500 mb-[.6rem]">Nghỉ phép</p>
-        <p className="text-[2.5rem] font-semibold text-amber-700">
-          {stats.onLeave}
-        </p>
+        <p className="text-[2.5rem]  text-amber-700">{stats.onLeave}</p>
         <p className="text-[1.2rem] text-gray-500 mt-[.4rem]">
           {stats.total ? Math.round((stats.onLeave / stats.total) * 100) : 0}%
           tổng nhân viên
@@ -80,9 +74,7 @@ function Stats({ stats }) {
       </div>
       <div className="bg-gray-100 shadow-sm rounded-[.8rem] p-[1.4rem]">
         <p className="text-[1.6rem] text-gray-400 mb-[.6rem]">Đã nghỉ việc</p>
-        <p className="text-[2.5rem] font-semibold text-red-700">
-          {stats.resigned}
-        </p>
+        <p className="text-[2.5rem]  text-red-700">{stats.resigned}</p>
         <p className="text-[1.2rem] text-gray-400 mt-[.4rem]">
           {stats.total ? Math.round((stats.resigned / stats.total) * 100) : 0}%
           tổng nhân viên
@@ -126,9 +118,7 @@ function Staff() {
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8 min-h-[calc(100vh-10rem)]">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-[2.2rem] font-semibold text-gray-800">
-            Quản lý nhân viên
-          </h3>
+          <h3 className="text-[2.2rem]  text-gray-800">Quản lý nhân viên</h3>
           <p className="text-gray-500">
             Quản lý toàn bộ nhân viên của nhà hàng.
           </p>

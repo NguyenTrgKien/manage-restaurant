@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TableFormModal from "./TableFormModal";
 import TableDeleteModal from "./TableDeleteModal";
 import { getAllTable, updateTable } from "../../../apis/table.api";
+import { useAuth } from "../../../hooks/useAuth";
 
 export const STATUS_LIST = [
   {
@@ -74,6 +75,7 @@ function TableRowSkeleton() {
 }
 
 function Table() {
+  const user = useAuth();
   const queryClient = useQueryClient();
   const [searchTable, setSearchTable] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -119,18 +121,18 @@ function Table() {
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8 min-h-[calc(100vh-10rem)]">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-[2.2rem] font-semibold text-gray-800">
-            Quản lý bàn
-          </h3>
+          <h3 className="text-[2.2rem]  text-gray-800">Quản lý bàn</h3>
           <p className="text-gray-500">Quản lý toàn bộ bàn ăn của nhà hàng.</p>
         </div>
-        <button
-          onClick={handleOpenCreate}
-          className="flex items-center justify-center space-x-2 px-8 py-4 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors text-white text-[1.6rem]"
-        >
-          <FontAwesomeIcon icon={faAdd} />
-          <span>Thêm bàn</span>
-        </button>
+        {user.role !== "admin" && (
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center justify-center space-x-2 px-8 py-4 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors text-white text-[1.6rem]"
+          >
+            <FontAwesomeIcon icon={faAdd} />
+            <span>Thêm bàn</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-5">
@@ -162,7 +164,9 @@ function Table() {
               <th className="p-5 font-medium border-r border-gray-200">
                 Cập nhật trạng thái
               </th>
-              <th className="p-5 font-medium text-center">Thao tác</th>
+              {user.role === "admin" && (
+                <th className="p-5 font-medium text-center">Thao tác</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -189,7 +193,7 @@ function Table() {
                     <td className="p-5 text-gray-500 border-r border-gray-200">
                       {idx + 1}
                     </td>
-                    <td className="p-5 font-semibold text-gray-800 border-r border-gray-200">
+                    <td className="p-5  text-gray-800 border-r border-gray-200">
                       {table.name}
                     </td>
                     <td className="p-5 text-gray-500 border-r border-gray-200">
@@ -223,7 +227,7 @@ function Table() {
                             }
                             className={`px-[1rem] py-[.4rem] rounded-full border text-[1.3rem] transition-all whitespace-nowrap disabled:cursor-not-allowed ${
                               table.status === st.value
-                                ? `${st.badge} border-transparent font-semibold`
+                                ? `${st.badge} border-transparent `
                                 : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"
                             }`}
                           >
@@ -232,24 +236,26 @@ function Table() {
                         ))}
                       </div>
                     </td>
-                    <td className="p-5 text-center">
-                      <div className="flex items-center justify-center gap-[.8rem]">
-                        <button
-                          onClick={() => handleOpenEdit(table)}
-                          className="flex items-center gap-[.5rem] px-[1.5rem] h-[3.2rem] bg-blue-50 text-blue-600 text-[1.6rem] rounded-[.6rem] cursor-pointer hover:bg-blue-100 transition-colors whitespace-nowrap"
-                        >
-                          <FontAwesomeIcon icon={faPenToSquare} />
-                          Sửa
-                        </button>
-                        <button
-                          onClick={() => setDeleteData(table)}
-                          className="flex items-center gap-[.5rem] px-[1.5rem] h-[3.2rem] bg-red-50 text-red-500 text-[1.6rem] rounded-[.6rem] cursor-pointer hover:bg-red-100 transition-colors whitespace-nowrap"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                          Xóa
-                        </button>
-                      </div>
-                    </td>
+                    {user.role === "admin" && (
+                      <td className="p-5 text-center">
+                        <div className="flex items-center justify-center gap-[.8rem]">
+                          <button
+                            onClick={() => handleOpenEdit(table)}
+                            className="flex items-center gap-[.5rem] px-[1.5rem] h-[3.2rem] bg-blue-50 text-blue-600 text-[1.6rem] rounded-[.6rem] cursor-pointer hover:bg-blue-100 transition-colors whitespace-nowrap"
+                          >
+                            <FontAwesomeIcon icon={faPenToSquare} />
+                            Sửa
+                          </button>
+                          <button
+                            onClick={() => setDeleteData(table)}
+                            className="flex items-center gap-[.5rem] px-[1.5rem] h-[3.2rem] bg-red-50 text-red-500 text-[1.6rem] rounded-[.6rem] cursor-pointer hover:bg-red-100 transition-colors whitespace-nowrap"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })

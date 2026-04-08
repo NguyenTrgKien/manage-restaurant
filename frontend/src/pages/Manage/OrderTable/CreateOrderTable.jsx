@@ -12,21 +12,16 @@ import {
   faTimesCircle,
   faSpinner,
   faUsers,
-  faUtensils,
-  faSearch,
-  faPlus,
-  faMinus,
-  faTrash,
-  faShoppingCart,
+  faBowlFood,
+  faFilter,
+  faClose,
+  faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../../hooks/useAuth";
 import { getAllTable } from "../../../apis/table.api";
 import { getAllTimeframe } from "../../../apis/timeframe.api";
-import {
-  checkOrderTableDist,
-  createOrderTable,
-  createOrder,
-} from "../../../apis/order.api";
+import { checkOrderTableDist, createOrderTable } from "../../../apis/order.api";
+import { getCustomerByPhone } from "../../../apis/customer.api";
 import { getAllFood } from "../../../apis/menu.api";
 
 function SkeletonCard() {
@@ -34,19 +29,6 @@ function SkeletonCard() {
     <div className="animate-pulse rounded-[.8rem] border border-gray-200 p-[1.2rem] space-y-2">
       <div className="h-[1.6rem] w-3/4 bg-gray-200 rounded" />
       <div className="h-[1.2rem] w-1/2 bg-gray-200 rounded" />
-    </div>
-  );
-}
-
-function FoodCardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-[.8rem] border border-gray-200 overflow-hidden">
-      <div className="h-[10rem] bg-gray-200" />
-      <div className="p-[1rem] space-y-2">
-        <div className="h-[1.4rem] w-3/4 bg-gray-200 rounded" />
-        <div className="h-[1.2rem] w-1/2 bg-gray-200 rounded" />
-        <div className="h-[3rem] w-full bg-gray-200 rounded-[.6rem]" />
-      </div>
     </div>
   );
 }
@@ -75,68 +57,52 @@ function AvailableBadge({ status }) {
   );
 }
 
-function CartItem({ item, onIncrease, onDecrease, onRemove }) {
-  return (
-    <div className="flex items-center gap-[1rem] py-[1rem] border-b border-gray-100 last:border-b-0">
-      <img
-        src={item.image || "/placeholder-food.png"}
-        alt={item.name}
-        className="w-[4.8rem] h-[4.8rem] rounded-[.6rem] object-cover flex-shrink-0 bg-gray-100"
-      />
-      <div className="flex-1 min-w-0">
-        <p className="text-[1.5rem] font-medium text-gray-800 line-clamp-1">
-          {item.name}
-        </p>
-        <p className="text-[1.4rem] text-red-500 font-medium">
-          {Number(item.price).toLocaleString("vi-VN")}đ
-        </p>
-      </div>
-      <div className="flex items-center gap-[.5rem]">
-        <button
-          onClick={() => onDecrease(item.id)}
-          className="w-[2.4rem] h-[2.4rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-        >
-          <FontAwesomeIcon icon={faMinus} className="text-[1.2rem]" />
-        </button>
-        <span className="text-[1.5rem] font-medium w-[2rem] text-center">
-          {item.qty}
-        </span>
-        <button
-          onClick={() => onIncrease(item.id)}
-          className="w-[2.4rem] h-[2.4rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-        >
-          <FontAwesomeIcon icon={faPlus} className="text-[1.2rem]" />
-        </button>
-        <button
-          onClick={() => onRemove(item.id)}
-          className="w-[2.4rem] h-[2.4rem] rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 transition-colors ml-[.2rem] cursor-pointer"
-        >
-          <FontAwesomeIcon icon={faTrash} className="text-[1.2rem]" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function CreateOrderTable() {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const [step, setStep] = useState("table");
-
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [customer, setCustomer] = useState(null);
+  const [isFetchingCustomer, setIsFetchingCustomer] = useState(false);
   const [numberGuests, setNumberGuests] = useState(1);
   const [orderDate, setOrderDate] = useState("");
   const [selectedTableId, setSelectedTableId] = useState(null);
   const [selectedTimeFrameId, setSelectedTimeFrameId] = useState(null);
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState({});
+
+  const [dataQueryFood, setDataQueryFood] = useState({
+    name: "",
+    price: "asc",
+  });
+  const [queryFoodDefault, setQueryFoodDefault] = useState({
+    limit: 10,
+    page: 1,
+    ...dataQueryFood,
+  });
+  const [openFood, setOpenFood] = useState(false);
+  const [selectFoods, setSelectFoods] = useState([]);
   const [availMap, setAvailMap] = useState({});
 
-  const [cart, setCart] = useState([]);
-  const [searchFood, setSearchFood] = useState("");
+  useEffect(() => {
+    if (phoneNumber.trim().length !== 10) return;
 
-  const [createdOrderTableId, setCreatedOrderTableId] = useState(null);
+    const timer = setTimeout(async () => {
+      setIsFetchingCustomer(true);
+      try {
+        const res = await getCustomerByPhone(phoneNumber);
+        if (res.status === 200) {
+          setCustomer(res?.data?.data ?? null);
+        }
+      } catch {
+        setCustomer(null);
+      } finally {
+        setIsFetchingCustomer(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [phoneNumber]);
 
   const { data: tableRes, isLoading: tablesLoading } = useQuery({
     queryKey: ["tables"],
@@ -146,18 +112,9 @@ function CreateOrderTable() {
     queryKey: ["timeFrames"],
     queryFn: getAllTimeframe,
   });
-  const { data: foodRes, isLoading: foodLoading } = useQuery({
-    queryKey: ["foods"],
-    queryFn: getAllFood,
-    enabled: step === "food",
-  });
 
   const tables = tableRes?.data?.data ?? [];
   const timeFrames = tfRes?.data ?? [];
-  const foods = foodRes?.data?.data ?? [];
-  const filteredFoods = foods.filter((f) =>
-    (f.name ?? "").toLowerCase().includes(searchFood.toLowerCase()),
-  );
 
   useEffect(() => {
     if (!orderDate || tables.length === 0 || timeFrames.length === 0) return;
@@ -195,6 +152,12 @@ function CreateOrderTable() {
     });
   }, [orderDate, tables.length, timeFrames.length]);
 
+  const { data: resFood, isLoading: isLoadingFood } = useQuery({
+    queryKey: ["food", queryFoodDefault],
+    queryFn: () => getAllFood(queryFoodDefault),
+  });
+  const food = resFood?.data?.data || [];
+
   useEffect(() => {
     setSelectedTableId(null);
     setSelectedTimeFrameId(null);
@@ -211,53 +174,25 @@ function CreateOrderTable() {
   const selectedTimeFrame = timeFrames.find(
     (t) => t.id === selectedTimeFrameId,
   );
-  const totalAmount = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-
-  const addToCart = (food) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === food.id);
-      if (existing)
-        return prev.map((i) =>
-          i.id === food.id ? { ...i, qty: i.qty + 1 } : i,
-        );
-      return [...prev, { ...food, qty: 1 }];
-    });
-  };
-  const increase = (id) =>
-    setCart((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: i.qty + 1 } : i)),
-    );
-  const decrease = (id) =>
-    setCart((prev) =>
-      prev
-        .map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i))
-        .filter((i) => i.qty > 0),
-    );
-  const removeItem = (id) => setCart((prev) => prev.filter((i) => i.id !== id));
 
   const tableMutation = useMutation({
     mutationFn: (payload) => createOrderTable(payload),
     onSuccess: (res) => {
-      if (res?.errCode === 0) {
-        setCreatedOrderTableId(res.data.id);
-        setStep("food");
+      console.log(res);
+
+      if (res?.status === 200) {
+        navigate(-1);
       } else {
         setErrors({ server: res?.message || "Đặt bàn thất bại!" });
       }
     },
   });
 
-  const orderMutation = useMutation({
-    mutationFn: (payload) => createOrder(payload),
-    onSuccess: (res) => {
-      if (res?.errCode === 0) navigate(-1);
-      else setErrors({ server: res?.message || "Tạo đơn món thất bại!" });
-    },
-  });
-
   const handleSubmitTable = () => {
     const newErrors = {};
     if (!fullName.trim()) newErrors.fullName = "Vui lòng nhập tên khách hàng!";
+    if (!phoneNumber.trim())
+      newErrors.phoneNumber = "Vui lòng nhập số điện thoại khách hàng!";
     if (!orderDate) newErrors.orderDate = "Vui lòng chọn ngày đến!";
     if (!selectedTableId) newErrors.table = "Vui lòng chọn bàn!";
     if (!selectedTimeFrameId) newErrors.timeFrame = "Vui lòng chọn khung giờ!";
@@ -269,130 +204,91 @@ function CreateOrderTable() {
       return;
     }
     setErrors({});
+    const dataRequest = customer
+      ? { customerId: customer.id }
+      : { fullName: fullName.trim(), phoneNumber: phoneNumber.trim() };
+
     tableMutation.mutate({
       userId: user?.id ?? undefined,
-      fullName: fullName.trim(),
       numberGuests: Number(numberGuests),
       orderDate,
       tableId: selectedTableId,
       timeFrameId: selectedTimeFrameId,
       note: note.trim() || undefined,
+      ...(selectFoods.length > 0 ? { orderItems: selectFoods } : {}),
+      ...dataRequest,
     });
   };
 
-  const handleSubmitFood = () => {
-    if (cart.length === 0) {
-      navigate(-1);
-      return;
-    }
-    orderMutation.mutate({
-      userId: user?.id ?? undefined,
-      fullName: fullName.trim(),
-      orderTableId: createdOrderTableId,
-      paymentMethod: "CASH",
-      items: cart.map((item) => ({ foodId: item.id, quantity: item.qty })),
-    });
+  const handleFilter = () => {
+    setQueryFoodDefault((prev) => ({
+      ...prev,
+      ...dataQueryFood,
+    }));
   };
 
   const todayStr = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="w-full h-full bg-white p-[2rem] rounded-md">
-      <div className="flex items-center gap-[1.5rem] mb-[2.5rem]">
+    <div className="w-full h-full bg-white p-[2rem] rounded-md text-[1.4rem] md:text-[1.6rem]">
+      <div className="flex items-center gap-5 mb-[2.5rem]">
         <button
-          onClick={() => (step === "food" ? setStep("table") : navigate(-1))}
+          onClick={() => navigate(-1)}
           className="flex items-center justify-center w-[3.8rem] h-[3.8rem] rounded-[.8rem] border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
         >
           <FontAwesomeIcon icon={faArrowLeft} />
         </button>
         <div>
           <h3 className="text-[2.2rem] font-semibold text-gray-800">
-            {step === "table" ? "Tạo đơn đặt bàn" : "Thêm món cho bàn"}
+            Tạo đơn đặt bàn
           </h3>
           <p className="text-gray-500">
-            {step === "table"
-              ? "Chọn ngày, bàn, khung giờ và điền thông tin."
-              : `Bàn ${selectedTableName} · ${selectedTimeFrame?.startTime ?? ""} – ${selectedTimeFrame?.endTime ?? ""}`}
+            Chọn ngày, bàn, khung giờ và điền thông tin.
           </p>
-        </div>
-
-        <div className="ml-auto flex items-center gap-[1rem]">
-          {[
-            { key: "table", label: "Đặt bàn" },
-            { key: "food", label: "Chọn món" },
-          ].map((s, idx) => (
-            <div key={s.key} className="flex items-center gap-[.8rem]">
-              {idx > 0 && (
-                <div className="w-[3rem] h-[.2rem] bg-gray-200 rounded-full" />
-              )}
-              <div className="flex items-center gap-[.6rem]">
-                <div
-                  className={`w-[2.8rem] h-[2.8rem] rounded-full flex items-center justify-center text-[1.3rem] font-semibold transition-all ${
-                    step === s.key
-                      ? "bg-cyan-500 text-white"
-                      : step === "food" && s.key === "table"
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  {step === "food" && s.key === "table" ? (
-                    <FontAwesomeIcon icon={faCheckCircle} />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                <span
-                  className={`text-[1.4rem] ${step === s.key ? "text-cyan-600 font-medium" : "text-gray-400"}`}
-                >
-                  {s.label}
-                </span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
-      {step === "table" && (
-        <div className="flex gap-[2rem] items-start">
-          <div className="flex-1 min-w-0 space-y-[2rem]">
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
-                <FontAwesomeIcon
-                  icon={faCalendarDays}
-                  className="text-cyan-500"
-                />
-                Chọn ngày đến
-              </h4>
-              <input
-                type="date"
-                min={todayStr}
-                value={orderDate}
-                onChange={(e) => {
-                  setOrderDate(e.target.value);
-                  if (errors.orderDate)
-                    setErrors((p) => ({ ...p, orderDate: "" }));
-                }}
-                className={`w-full h-[4.2rem] px-[1.2rem] border rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] ${errors.orderDate ? "border-red-400" : "border-gray-300"}`}
+      <div className="flex lg:flex-row flex-col gap-[2rem] items-start">
+        <div className="flex-1 w-full md:min-w-0 space-y-[2rem]">
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon
+                icon={faCalendarDays}
+                className="text-cyan-500"
               />
-              {errors.orderDate && (
-                <p className="text-red-500 text-[1.6rem]">{errors.orderDate}</p>
-              )}
-            </div>
+              Chọn ngày đến
+            </h4>
+            <input
+              type="date"
+              min={todayStr}
+              value={orderDate}
+              onChange={(e) => {
+                setOrderDate(e.target.value);
+                if (errors.orderDate)
+                  setErrors((p) => ({ ...p, orderDate: "" }));
+              }}
+              className={`w-full h-[4.2rem] px-[1.2rem] border rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] ${errors.orderDate ? "border-red-400" : "border-gray-300"}`}
+            />
+            {errors.orderDate && (
+              <p className="text-red-500 text-[1.6rem]">{errors.orderDate}</p>
+            )}
+          </div>
 
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
-                <FontAwesomeIcon icon={faClock} className="text-cyan-500" />
-                Chọn khung giờ
-              </h4>
-              {tfLoading ? (
-                <div className="grid grid-cols-3 gap-[1rem]">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <SkeletonCard key={i} />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-[1rem]">
-                  {timeFrames.map((tf) => (
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon icon={faClock} className="text-cyan-500" />
+              Chọn khung giờ
+            </h4>
+            {tfLoading ? (
+              <div className="grid grid-cols-3 gap-[1rem]">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-[1rem]">
+                {timeFrames.length > 0 ? (
+                  timeFrames.map((tf) => (
                     <button
                       key={tf.id}
                       onClick={() => {
@@ -408,33 +304,37 @@ function CreateOrderTable() {
                     >
                       {tf.startTime} – {tf.endTime}
                     </button>
-                  ))}
-                </div>
-              )}
-              {errors.timeFrame && (
-                <p className="text-red-500 text-[1.6rem]">{errors.timeFrame}</p>
-              )}
-            </div>
-
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
-                <FontAwesomeIcon icon={faChair} className="text-cyan-500" />
-                Chọn bàn
-                {!orderDate && (
-                  <span className="ml-auto text-[1.3rem] font-normal text-gray-400">
-                    Vui lòng chọn ngày trước
-                  </span>
+                  ))
+                ) : (
+                  <div className="text-nowrap">Không có khung giờ</div>
                 )}
-              </h4>
-              {tablesLoading ? (
-                <div className="grid grid-cols-2 xl:grid-cols-3 gap-[1.2rem]">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <SkeletonCard key={i} />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 xl:grid-cols-3 gap-[1.2rem] max-h-[calc(100vh-42rem)] overflow-y-auto pr-[.4rem]">
-                  {tables.map((table) => {
+              </div>
+            )}
+            {errors.timeFrame && (
+              <p className="text-red-500 text-[1.6rem]">{errors.timeFrame}</p>
+            )}
+          </div>
+
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon icon={faChair} className="text-cyan-500" />
+              Chọn bàn
+              {!orderDate && (
+                <span className="ml-auto text-[1.3rem] font-normal text-gray-400">
+                  Vui lòng chọn ngày trước
+                </span>
+              )}
+            </h4>
+            {tablesLoading ? (
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-[1.2rem]">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-[1.2rem] max-h-[calc(100vh-42rem)] overflow-y-auto pr-[.4rem]">
+                {tables.length > 0 ? (
+                  tables.map((table) => {
                     const avKey = selectedTimeFrameId
                       ? `${table.id}-${selectedTimeFrameId}`
                       : null;
@@ -468,315 +368,344 @@ function CreateOrderTable() {
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-              )}
-              {errors.table && (
-                <p className="text-red-500 text-[1.6rem]">{errors.table}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="w-[42rem] flex-shrink-0 space-y-[1.5rem]">
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1.2rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
-                <FontAwesomeIcon icon={faUser} className="text-cyan-500" />
-                Thông tin khách hàng
-              </h4>
-              <div>
-                <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
-                  Họ và tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên khách hàng..."
-                  value={fullName}
-                  onChange={(e) => {
-                    setFullName(e.target.value);
-                    if (errors.fullName)
-                      setErrors((p) => ({ ...p, fullName: "" }));
-                  }}
-                  className={`w-full h-[4.2rem] px-[1.2rem] border rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] ${errors.fullName ? "border-red-400" : "border-gray-300"}`}
-                />
-                {errors.fullName && (
-                  <p className="text-red-500 text-[1.6rem] mt-[.4rem]">
-                    {errors.fullName}
-                  </p>
+                  })
+                ) : (
+                  <div>Không có bàn</div>
                 )}
               </div>
-              <div>
-                <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
-                  Số khách <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-[1rem]">
-                  <button
-                    onClick={() => setNumberGuests((n) => Math.max(1, n - 1))}
-                    className="w-[3.6rem] h-[3.6rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-[1.8rem]"
-                  >
-                    –
-                  </button>
-                  <span className="text-[2rem] font-semibold w-[3rem] text-center text-gray-800">
-                    {numberGuests}
-                  </span>
-                  <button
-                    onClick={() => setNumberGuests((n) => n + 1)}
-                    className="w-[3.6rem] h-[3.6rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-[1.8rem]"
-                  >
-                    +
-                  </button>
-                  <span className="text-[1.6rem] text-gray-400">người</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
-                  Ghi chú
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Yêu cầu đặc biệt..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full px-[1.2rem] py-[1rem] border border-gray-300 rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
-                <FontAwesomeIcon icon={faUsers} className="text-cyan-500" />
-                Tóm tắt
-              </h4>
-              <div className="space-y-[.8rem] text-[1.5rem]">
-                {[
-                  [
-                    "Ngày đến",
-                    orderDate
-                      ? new Date(orderDate).toLocaleDateString("vi-VN")
-                      : "—",
-                  ],
-                  [
-                    "Khung giờ",
-                    selectedTimeFrame
-                      ? `${selectedTimeFrame.startTime} – ${selectedTimeFrame.endTime}`
-                      : "—",
-                  ],
-                  ["Bàn", selectedTableName],
-                  ["Số khách", `${numberGuests} người`],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between">
-                    <span className="text-gray-500">{label}</span>
-                    <span className="font-medium text-gray-800">{value}</span>
-                  </div>
-                ))}
-                {selectedAvailKey && (
-                  <div className="flex justify-between items-center pt-[.4rem] border-t border-gray-100">
-                    <span className="text-gray-500">Tình trạng</span>
-                    <AvailableBadge status={availMap[selectedAvailKey]} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-[1rem]">
-              <button
-                onClick={() => navigate(-1)}
-                className="flex-1 h-[4.4rem] rounded-[.8rem] border border-gray-300 text-gray-600 text-[1.6rem] font-medium hover:bg-gray-50 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleSubmitTable}
-                disabled={tableMutation.isPending || isSelectedBooked}
-                className="flex-1 h-[4.4rem] rounded-[.8rem] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[1.6rem] font-medium transition-colors flex items-center justify-center gap-[.8rem]"
-              >
-                <FontAwesomeIcon icon={faChair} />
-                {tableMutation.isPending ? "Đang đặt..." : "Đặt bàn →"}
-              </button>
-            </div>
-            {errors.server && (
-              <p className="text-red-500 text-[1.6rem] text-center">
-                {errors.server}
-              </p>
+            )}
+            {errors.table && (
+              <p className="text-red-500 text-[1.6rem]">{errors.table}</p>
             )}
           </div>
-        </div>
-      )}
-
-      {step === "food" && (
-        <div className="flex gap-[2rem] items-start">
-          <div className="flex-1 min-w-0 space-y-[1.5rem]">
-            <div className="relative">
-              <FontAwesomeIcon
-                icon={faSearch}
-                className="absolute left-[1.4rem] top-1/2 -translate-y-1/2 text-gray-400 text-[1.6rem]"
-              />
-              <input
-                type="text"
-                placeholder="Tìm tên món..."
-                value={searchFood}
-                onChange={(e) => setSearchFood(e.target.value)}
-                className="w-full h-[4.2rem] pl-[4rem] pr-[1.4rem] border border-gray-300 rounded-[.8rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem]"
-              />
-            </div>
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-[1.2rem] max-h-[calc(100vh-22rem)] overflow-y-auto pr-[.4rem]">
-              {foodLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <FoodCardSkeleton key={i} />
-                ))
-              ) : filteredFoods.length === 0 ? (
-                <div className="col-span-3 py-[4rem] text-center text-gray-400 text-[1.6rem]">
-                  Không tìm thấy món nào
-                </div>
-              ) : (
-                filteredFoods.map((food) => {
-                  const inCart = cart.find((i) => i.id === food.id);
-                  const isOutOfStock = food.quantity === 0;
-                  return (
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon icon={faBowlFood} className="text-cyan-500" />
+              Chọn món ăn
+              <button
+                className="px-6 py-3 rounded-md bg-green-500 hover:bg-green-600 transition-colors duration-300 text-white ml-auto text-[1.3rem] font-normal"
+                onClick={() => setOpenFood((prev) => !prev)}
+              >
+                {openFood ? "Đóng lại" : "Mở món ăn"}
+              </button>
+            </h4>
+            <div className="my-5 border border-gray-300 p-5 rounded-md">
+              <h4>Danh sách món ăn</h4>
+              <div className="flex flex-col space-y-5">
+                {selectFoods.length > 0 ? (
+                  selectFoods.map((food) => (
                     <div
-                      key={food.id}
-                      className={`rounded-[.8rem] border overflow-hidden transition-all ${inCart ? "border-cyan-400 shadow-[0_0_0_2px_rgba(6,182,212,.15)]" : "border-gray-200 hover:border-gray-300"} ${isOutOfStock ? "opacity-50" : ""}`}
+                      className="p-5 bg-green-50 border border-green-300 flex items-center justify-between rounded-md"
+                      key={food.foodId}
                     >
-                      <div className="relative">
-                        <img
-                          src={food.image || "/placeholder-food.png"}
-                          alt={food.name}
-                          className="w-full h-[15rem] object-cover bg-gray-100"
-                        />
-                        {inCart && (
-                          <span className="absolute top-[.8rem] right-[.8rem] bg-cyan-500 text-white text-[1.1rem] font-medium px-[.8rem] py-[.2rem] rounded-full">
-                            x{inCart.qty}
-                          </span>
-                        )}
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                            <span className="text-[1.6rem] text-gray-500 font-medium">
-                              Hết hàng
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-[1rem]">
-                        <p className="text-[1.5rem] font-medium text-gray-800 line-clamp-1 mb-[.2rem]">
-                          {food.name}
-                        </p>
-                        <p className="text-[1.5rem] text-red-500 font-medium mb-[.8rem]">
-                          {Number(food.price).toLocaleString("vi-VN")}đ
-                        </p>
+                      <p>{food.foodName}</p>
+                      <div className="flex items-center gap-5">
+                        <p>{food.price}</p>
                         <button
-                          disabled={isOutOfStock}
-                          onClick={() => addToCart(food)}
-                          className="w-full h-[3.2rem] rounded-[.6rem] bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-[1.4rem] font-medium transition-colors"
+                          className="w-10 h-10 rounded-md bg-red-100 flex items-center justify-center"
+                          onClick={() => {
+                            const newFood = selectFoods.filter(
+                              (item) => item.foodId !== food.foodId,
+                            );
+                            setSelectFoods(newFood);
+                          }}
                         >
-                          {inCart ? "Thêm nữa" : "Thêm vào đơn"}
+                          <FontAwesomeIcon
+                            icon={faTrashCan}
+                            className="text-[1.4rem] text-red-500"
+                          />
                         </button>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          <div className="w-[42rem] flex-shrink-0 space-y-[1.5rem]">
-            <div className="rounded-[.8rem] bg-cyan-50 border border-cyan-200 p-[1.5rem]">
-              <div className="flex items-center gap-[.8rem] mb-[.8rem]">
-                <FontAwesomeIcon
-                  icon={faCheckCircle}
-                  className="text-cyan-500 text-[1.8rem]"
-                />
-                <span className="text-[1.6rem] font-semibold text-cyan-700">
-                  Đặt bàn thành công!
-                </span>
-              </div>
-              <div className="space-y-[.4rem] text-[1.4rem] text-cyan-700">
-                <p>
-                  Bàn: <strong>{selectedTableName}</strong>
-                </p>
-                <p>
-                  Khung giờ:{" "}
-                  <strong>
-                    {selectedTimeFrame?.startTime} –{" "}
-                    {selectedTimeFrame?.endTime}
-                  </strong>
-                </p>
-                <p>
-                  Khách: <strong>{fullName}</strong> · {numberGuests} người
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem]">
-              <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem] mb-[1rem]">
-                <FontAwesomeIcon
-                  icon={faShoppingCart}
-                  className="text-cyan-500"
-                />
-                Đơn món
-                {cart.length > 0 && (
-                  <span className="ml-auto text-[1.4rem] font-normal text-gray-400">
-                    {cart.length} loại
-                  </span>
+                  ))
+                ) : (
+                  <div className="w-full text-center">Chưa chọn món</div>
                 )}
-              </h4>
-              {cart.length === 0 ? (
-                <div className="py-[3rem] text-center text-gray-400 text-[1.5rem]">
-                  <FontAwesomeIcon
-                    icon={faUtensils}
-                    className="text-[3rem] mb-[1rem] block mx-auto text-gray-200"
+              </div>
+            </div>
+            {openFood && (
+              <div>
+                <div className="grid grid-cols-2 gap-5">
+                  <input
+                    type="text"
+                    name="name"
+                    value={dataQueryFood.name}
+                    className="w-full h-[4.2rem] border border-gray-300 rounded-md focus:border-cyan-500 pl-5 outline-none"
+                    placeholder="Tên món ăn..."
+                    onChange={(e) =>
+                      setDataQueryFood((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
                   />
-                  Chưa chọn món nào
+                  <div className="flex gap-5">
+                    <select
+                      name="price"
+                      id="price"
+                      value={dataQueryFood.price}
+                      onChange={(e) =>
+                        setDataQueryFood((prev) => ({
+                          ...prev,
+                          price: e.target.value,
+                        }))
+                      }
+                      className="h-[4.2rem] outline-none px-5 border border-gray-300 rounded-md flex items-center justify-center gap-2.5"
+                    >
+                      <option value="asc">Thấp đến cao</option>
+                      <option value="desc">Cao đến thấp</option>
+                    </select>
+                    <button
+                      className="h-[4.2rem] px-5 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center gap-2.5"
+                      onClick={handleFilter}
+                    >
+                      <FontAwesomeIcon icon={faFilter} />
+                      <span>Lọc</span>
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="max-h-[24rem] overflow-y-auto">
-                  {cart.map((item) => (
-                    <CartItem
-                      key={item.id}
-                      item={item}
-                      onIncrease={increase}
-                      onDecrease={decrease}
-                      onRemove={removeItem}
-                    />
-                  ))}
-                </div>
-              )}
-              {cart.length > 0 && (
-                <div className="mt-[1.2rem] pt-[1.2rem] border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[1.6rem] text-gray-700">Tổng cộng</span>
-                  <span className="text-[1.8rem] font-semibold text-red-500">
-                    {Number(totalAmount).toLocaleString("vi-VN")}đ
-                  </span>
-                </div>
-              )}
-            </div>
 
-            <div className="flex gap-[1rem]">
-              <button
-                onClick={() => navigate(-1)}
-                className="flex-1 h-[4.4rem] rounded-[.8rem] border border-gray-300 text-gray-600 text-[1.6rem] font-medium hover:bg-gray-50 transition-colors"
-              >
-                Bỏ qua
-              </button>
-              <button
-                onClick={handleSubmitFood}
-                disabled={orderMutation.isPending}
-                className="flex-1 h-[4.4rem] rounded-[.8rem] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 text-white text-[1.6rem] font-medium transition-colors flex items-center justify-center gap-[.8rem]"
-              >
-                <FontAwesomeIcon icon={faCheckCircle} />
-                {orderMutation.isPending
-                  ? "Đang lưu..."
-                  : cart.length > 0
-                    ? "Xác nhận đơn món"
-                    : "Hoàn tất"}
-              </button>
-            </div>
-            {errors.server && (
-              <p className="text-red-500 text-[1.6rem] text-center">
-                {errors.server}
-              </p>
+                {isLoadingFood ? (
+                  <div className="w-full text-center py-5">
+                    Đang tải dữ liệu món ăn....
+                  </div>
+                ) : food.length > 0 ? (
+                  food.map((it) => {
+                    const isExist = selectFoods.find(
+                      (item) => item.foodId === it.id,
+                    );
+                    return (
+                      <div
+                        key={it.id}
+                        className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-10 md:gap-8 gap-5 mt-5 `}
+                      >
+                        <div
+                          className={`w-full h-auto border border-gray-200 rounded-md ${isExist ? "border-2  border-green-500" : ""}`}
+                        >
+                          <img
+                            src={it.image}
+                            alt="image"
+                            className="w-full h-[12rem] object-cover rounded-tl-md rounded-tr-md"
+                          />
+                          <div className="flex-1 p-2.5 space-y-2">
+                            <p className="line-clamp-1">Thịt gà nướng</p>
+                            <p className="text-[1.4rem] text-red-500">
+                              {Intl.NumberFormat("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                              }).format(150000)}
+                            </p>
+                            <button
+                              className={`w-full h-[3.5rem] text-[1.4rem] ${isExist ? "bg-green-500 hover:bg-green-600" : "bg-blue-500  hover:bg-blue-600"} text-white  rounded-md  transition-colors duration-300 outline-none`}
+                              onClick={() => {
+                                setSelectFoods((prev) => {
+                                  const dataAdd = {
+                                    foodId: it.id,
+                                    foodName: it.name,
+                                    quantity: 1,
+                                    price: it.price,
+                                  };
+                                  if (isExist) {
+                                    return prev.filter(
+                                      (item) => item.foodId !== it.id,
+                                    );
+                                  } else {
+                                    return [...prev, dataAdd];
+                                  }
+                                });
+                              }}
+                            >
+                              {isExist ? "Bỏ chọn" : "Chọn"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="w-full text-center py-5">
+                    Không có món ăn nào....
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
-      )}
+
+        <div className="w-full lg:w-[42rem] flex-shrink-0 space-y-[1.5rem]">
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1.2rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon icon={faUser} className="text-cyan-500" />
+              Thông tin khách hàng
+            </h4>
+            {customer ? (
+              <div className="w-full h-[4.2rem] border rounded-[.6rem] outline-none bg-cyan-50 border-cyan-500 transition-all text-[1.6rem] flex items-center justify-center gap-5">
+                <span>
+                  {customer.fullName} - {customer.phoneNumber}
+                </span>
+                <div
+                  className="h-[2.5rem] rounded-xl hover:bg-amber-600 px-4 text-[1.2rem] flex items-center justify-center bg-amber-500 text-white transition-colors duration-300 cursor-pointer"
+                  onClick={() => {
+                    setCustomer(null);
+                    setPhoneNumber("");
+                    setFullName("");
+                  }}
+                >
+                  Thay đổi
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
+                    Họ và tên <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nhập tên khách hàng..."
+                    value={fullName}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (errors.fullName)
+                        setErrors((p) => ({ ...p, fullName: "" }));
+                    }}
+                    className={`w-full h-[4.2rem] px-[1.2rem] border rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] ${errors.fullName ? "border-red-400" : "border-gray-300"}`}
+                  />
+                  {errors.fullName && (
+                    <p className="text-red-500 text-[1.6rem] mt-[.4rem]">
+                      {errors.fullName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Nhập số điện thoại..."
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        if (errors.phoneNumber)
+                          setErrors((p) => ({ ...p, phoneNumber: "" }));
+                      }}
+                      className={`w-full h-[4.2rem] px-[1.2rem] border rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] ${errors.phoneNumber ? "border-red-400" : "border-gray-300"}`}
+                    />
+                    {isFetchingCustomer && (
+                      <FontAwesomeIcon
+                        icon={faSpinner}
+                        spin
+                        className="absolute right-[1.2rem] top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                    )}
+                  </div>
+                  {errors.phoneNumber && (
+                    <p className="text-red-500 text-[1.6rem] mt-[.4rem]">
+                      {errors.phoneNumber}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            <div>
+              <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
+                Số khách <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-[1rem]">
+                <button
+                  onClick={() => setNumberGuests((n) => Math.max(1, n - 1))}
+                  className="w-[3.6rem] h-[3.6rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-[1.8rem]"
+                >
+                  –
+                </button>
+                <span className="text-[2rem] w-[3rem] text-center text-gray-800">
+                  {numberGuests}
+                </span>
+                <button
+                  onClick={() => setNumberGuests((n) => n + 1)}
+                  className="w-[3.6rem] h-[3.6rem] rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-[1.8rem]"
+                >
+                  +
+                </button>
+                <span className="text-[1.6rem] text-gray-400">người</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[1.6rem] text-gray-600 mb-[.5rem]">
+                Ghi chú
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Yêu cầu đặc biệt..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="w-full px-[1.2rem] py-[1rem] border border-gray-300 rounded-[.6rem] focus:outline-none focus:border-cyan-500 transition-all text-[1.6rem] resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[.8rem] border border-gray-200 p-[1.5rem] space-y-[1rem]">
+            <h4 className="text-[1.6rem] font-semibold text-gray-700 flex items-center gap-[.8rem]">
+              <FontAwesomeIcon icon={faUsers} className="text-cyan-500" />
+              Tóm tắt
+            </h4>
+            <div className="space-y-[.8rem] text-[1.5rem]">
+              {[
+                [
+                  "Ngày đến",
+                  orderDate
+                    ? new Date(orderDate).toLocaleDateString("vi-VN")
+                    : "—",
+                ],
+                [
+                  "Khung giờ",
+                  selectedTimeFrame
+                    ? `${selectedTimeFrame.startTime} – ${selectedTimeFrame.endTime}`
+                    : "—",
+                ],
+                ["Bàn", selectedTableName],
+                ["Số khách", `${numberGuests} người`],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between">
+                  <span className="text-gray-500">{label}</span>
+                  <span className="font-medium text-gray-800">{value}</span>
+                </div>
+              ))}
+              {selectedAvailKey && (
+                <div className="flex justify-between items-center pt-[.4rem] border-t border-gray-100">
+                  <span className="text-gray-500">Tình trạng</span>
+                  <AvailableBadge status={availMap[selectedAvailKey]} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-[1rem]">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex-1 h-[4.4rem] rounded-[.8rem] border border-gray-300 text-gray-600 text-[1.6rem] font-medium hover:bg-gray-50 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmitTable}
+              disabled={tableMutation.isPending || isSelectedBooked}
+              className="flex-1 h-[4.4rem] rounded-[.8rem] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[1.6rem] font-medium transition-colors flex items-center justify-center gap-[.8rem]"
+            >
+              <FontAwesomeIcon icon={faChair} />
+              {tableMutation.isPending ? "Đang đặt..." : "Đặt bàn →"}
+            </button>
+          </div>
+          {errors.server && (
+            <p className="text-red-500 text-[1.6rem] text-center">
+              {errors.server}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

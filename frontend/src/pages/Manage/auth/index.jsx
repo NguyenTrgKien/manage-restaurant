@@ -1,16 +1,20 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-import { useAuth } from "../../../hooks/useAuth";
+import { useContext, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import axiosInstance from "../../../configs/axiosInstance";
+import { AuthContext } from "../../../contexts/authContext";
 
 function LoginAdmin() {
-  const { login } = useAuth();
+  const { fetchUser } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState({
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,15 +38,26 @@ function LoginAdmin() {
     if (!isRequest) {
       return;
     }
-
+    setIsLoading(true);
     try {
-      const success = await login(email, password);
-
-      if (success) {
-        navigate("/manage");
-      }
+      const res = await axiosInstance.post("/api/v1/login", {
+        email: email,
+        password: password,
+      });
+      localStorage.setItem("access_token", res.data.access_token);
+      const from = location.state?.from?.pathname || "/manage";
+      await fetchUser();
+      navigate(from, { replace: true });
+      return;
     } catch (error) {
+      if (error.response?.status === 400) {
+        setErrorMessage(error.response.data.message);
+        return;
+      }
+      setErrorMessage("Lỗi đăng nhập, vui lòng thử lại!");
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,8 +77,9 @@ function LoginAdmin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border rounded-lg h-[4.5rem] px-8 focus:outline-none focus:border focus:border-blue-700"
+              onFocus={() => setError((prev) => ({ ...prev, password: "" }))}
             />
-            <p className="text-red-500 mt-1.5">{error.email}</p>
+            <p className="text-red-500 mt-1.5 text-[1.4rem]">{error.email}</p>
           </div>
 
           <div>
@@ -74,15 +90,22 @@ function LoginAdmin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border rounded-lg h-[4.5rem] px-8 focus:outline-none focus:border focus:border-blue-700"
+              onFocus={() => setError((prev) => ({ ...prev, password: "" }))}
             />
-            <p className="text-red-500 mt-1.5">{error.password}</p>
+            <p className="text-red-500 mt-1.5 text-[1.4rem]">
+              {error.password}
+            </p>
           </div>
+          {errorMessage && (
+            <p className="text-red-500 mt-4 text-[1.4rem]">{errorMessage}</p>
+          )}
 
           <button
             type="submit"
+            disabled={isLoading}
             className="w-full bg-blue-500 text-white h-[4.5rem] px-8 rounded-lg hover:bg-blue-600 transition"
           >
-            Đăng nhập
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
           <a
             href="#"

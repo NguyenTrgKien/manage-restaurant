@@ -27,7 +27,7 @@ function HeaderAdmin() {
   }, []);
 
   return (
-    <div className="fixed top-0 right-0 left-0 md:left-[25rem] flex items-center md:justify-end justify-between h-[6rem] px-12 bg-white shadow-sm z-[100]">
+    <div className="fixed top-0 right-0 left-0 md:left-[20rem] xl:left-[25rem] flex items-center md:justify-end justify-between h-[6rem] px-12 bg-white shadow-sm z-[100]">
       <button
         type="button"
         className="md:hidden block"

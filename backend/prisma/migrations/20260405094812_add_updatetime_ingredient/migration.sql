@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Inventory" ALTER COLUMN "lastUpdatedAt" SET DEFAULT CURRENT_TIMESTAMP;

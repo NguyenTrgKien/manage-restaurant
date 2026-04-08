@@ -7,23 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  staff
+  admin
+  customer
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   fullName  String?
   email     String?  @unique
   password  String?
-  role      String?
+  role      UserRole 
   image     String?
   publicId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   staff      Staff?
-  orders     Order[]
-  orderTables OrderTable[]
   cart       Cart?
   customer   Customer?
-  evaluate   Evaluate[]
+  orderTable OrderTable[]
+
+  inventoryTransactions InventoryTransactions[]
+  receipt InventoryReceipts[]
+  issue InventoryIssues[]
 }
 
 enum StaffPosition {
@@ -63,6 +71,7 @@ model Category {
   id        Int      @id @default(autoincrement())
   name      String?
   description String?
+  slug    String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,11 +84,12 @@ model Food {
   price      Decimal? @db.Decimal(10, 3)
   image      String?
   banner     String?
-  quantity   Int?
   categoryId Int?
   publicId    String?
   description String?
-  isAvailable Boolean @default(true)
+  slug    String? @unique
+  isActive Boolean @default(true)
+  stock      Int?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -87,7 +97,202 @@ model Food {
   orderItems OrderItem[]
   cartItems  CartItem[]
   evaluates  Evaluate[]
+  recipes   Recipe[]
 }
+
+enum SupplierStatus {
+  active
+  inactive
+}
+
+model Suppliers {
+  id  Int @id @default(autoincrement())
+  name  String
+  phone String
+  email   String @unique
+  address   String?
+  tax_code  String?
+  status  SupplierStatus @default(active)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  receipts InventoryReceipts[] 
+}
+
+enum IngredientUnit {
+  KG
+  G
+  L
+  ML
+  UNIT
+}
+
+model Ingredient {
+  id  Int @id @default(autoincrement())
+  name    String
+  unit    IngredientUnit
+  description   String?
+  categoryId  Int
+  minStock    Int @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  inventory   Inventory?
+  inventoryTransactions InventoryTransactions[]
+  receiptItems InventoryReceiptItem[]
+  issueItems InventoryIssueItem[]
+  recipes   Recipe[]
+
+  category  IngredientCategory @relation(fields: [categoryId], references: [id])
+}
+
+model IngredientCategory {
+  id  Int @id @default(autoincrement())
+  name    String  @unique
+  slug    String  @unique
+  createdAt   DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ingredients   Ingredient[]
+}
+
+model Recipe {
+  id  Int @id @default(autoincrement())
+  foodId  Int
+  ingredientId  Int
+  quantity  Decimal @db.Decimal(10, 3)
+
+  food  Food  @relation(fields: [foodId], references: [id])
+  ingredient  Ingredient  @relation(fields: [ingredientId], references: [id])
+
+  @@unique([foodId, ingredientId])
+}
+
+
+enum InventoryStatus {
+  in_stock
+  low_stock
+  out_of_stock
+}
+
+model Inventory {
+  id  Int @id @default(autoincrement())
+  quantity  Int @default(0)
+  ingredientId Int @unique
+  status InventoryStatus @default(low_stock)
+  avgPrice Decimal @db.Decimal(10, 3)
+  lastUpdatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+}
+enum InventoryTransactionType {
+  stock_in
+  stock_out
+}
+
+enum InventoryTransactionReference {
+  receipt
+  issue
+  order
+}
+
+model InventoryTransactions {
+  id  Int @id @default(autoincrement())
+  quantity  Int
+  ingredientId Int
+  type  InventoryTransactionType
+  costPrice Decimal? @db.Decimal(10,3)
+  beforeQuantity Int
+  afterQuantity Int
+  referenceType  InventoryTransactionReference @default(receipt)
+  referenceId    Int // id của phiếu nhập hoặc phiếu xuất hoặc đơn hàng
+  note String?
+  createdAt DateTime @default(now())
+  createdBy Int
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@index([ingredientId])
+  @@index([referenceType, referenceId])
+  @@index([createdAt])
+}
+
+enum InventoryReceiptStatus {
+  draft
+  completed
+  cancelled
+}
+
+model InventoryReceipts {
+  id  Int @id @default(autoincrement())
+  supplierId   Int
+  receiptCode  String @unique
+  receiptDate  DateTime
+  status  InventoryReceiptStatus
+  totalAmount Decimal @db.Decimal(20, 3)
+  note String?
+  createdBy   Int  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cancelReason String?
+  
+  supplier Suppliers @relation(fields: [supplierId], references: [id])
+  user     User      @relation(fields: [createdBy], references: [id])
+
+  items InventoryReceiptItem[]
+}
+
+model InventoryReceiptItem {
+  id  Int @id @default(autoincrement())
+  receiptId  Int
+  ingredientId  Int
+  quantity  Int
+  unitPrice  Decimal @db.Decimal(10, 3)
+  batchNumber  String @unique
+  manufactureDate   DateTime
+  expiryAt   DateTime
+  createdAt   DateTime @default(now())
+
+  receipt InventoryReceipts @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  ingredient    Ingredient  @relation(fields: [ingredientId], references: [id])
+  @@unique([ingredientId, batchNumber])
+}
+
+enum InventoryIssueStatus {
+  draft
+  completed
+  cancelled
+}
+
+
+model InventoryIssues {
+  id  Int @id @default(autoincrement())
+  issueCode  String @unique
+  issuedDate  DateTime
+  status  InventoryIssueStatus
+  note String?
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User @relation(fields: [createdBy], references: [id])
+  items InventoryIssueItem[]
+}
+
+model InventoryIssueItem {
+  id  Int @id @default(autoincrement())
+  issueId  Int
+  ingredientId  Int
+  quantity  Int
+  costPrice  Decimal @db.Decimal(10, 3)
+  totalPrice   Decimal @db.Decimal(10, 3)
+
+  issue InventoryIssues @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  ingredient  Ingredient  @relation(fields: [ingredientId], references: [id])
+}
+
 
 model Room {
   id        Int      @id @default(autoincrement())
@@ -129,43 +334,60 @@ model TimeFrame {
   orderTables OrderTable[]
 }
 
+enum OrderTableStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 model OrderTable {
   id           Int       @id @default(autoincrement())
-  userId       Int?
+  customerId       Int?
   tableId      Int?
   orderDate    DateTime?
-  status       String?
+  status       OrderTableStatus @default(PENDING)
   numberGuests Int?
   timeFrameId  Int?
   note          String?
   cancelReason  String?
+  createByUserId  Int?
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   table     Table?     @relation(fields: [tableId], references: [id], onDelete: Cascade)
   timeFrame TimeFrame? @relation(fields: [timeFrameId], references: [id])
   orders    Order[]
+  createBy User? @relation(fields: [createByUserId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELLED
+  COMPLETED
 }
 
 model Order {
   id            Int      @id @default(autoincrement())
-  userId        Int?
+  customerId        Int
+
   totalAmount   Decimal? @db.Decimal(10, 3)
-  paymentMethod String?
   orderTableId  Int?
-  fullName      String?
-  status        String?
+  status        OrderStatus @default(PENDING)
   note          String?
   cancelReason  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   paidAt        DateTime?
 
-  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   orderTable OrderTable? @relation(fields: [orderTableId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
-   evaluates  Evaluate[]
+  payments Payment[]
 }
 
 model OrderItem {
@@ -180,6 +402,29 @@ model OrderItem {
 
   order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
   food  Food?  @relation(fields: [foodId], references: [id])
+}
+
+enum PaymentMethod {
+  cash
+  momo
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+}
+
+model Payment {
+  id    Int   @id @default(autoincrement())
+  orderId   Int
+  amount    Decimal 
+  method    PaymentMethod @default(cash)
+  status    PaymentStatus @default(pending)
+  transactionId String?
+  paidAt    DateTime?
+
+  order   Order @relation(fields: [orderId], references: [id])
 }
 
 model Cart {
@@ -204,30 +449,36 @@ model CartItem {
   food Food? @relation(fields: [foodId], references: [id])
 }
 
+enum CustomerStatus {
+  inactive
+  active
+}
+
 model Customer {
   id          Int      @id @default(autoincrement())
   userId      Int?     @unique
-  phoneNumber String?
+  phoneNumber String   @unique
+  fullName    String
   address     String?
+  status      CustomerStatus
+  isBanned    Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
+  orderTables OrderTable[]
 }
 
 model Evaluate {
   id        Int      @id @default(autoincrement())
-  userId    Int? 
   rating    Int?
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   foodId    Int?
-  orderId    Int?
 
   food  Food?  @relation(fields: [foodId], references: [id])
-  order Order? @relation(fields: [orderId], references: [id])
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum AttendanceStatus {

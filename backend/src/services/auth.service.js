@@ -5,6 +5,7 @@ dotenv.config();
 import jwt from "jsonwebtoken";
 
 import { PrismaClient } from "@prisma/client";
+import AppError from "../common/httpStatusConfig.js";
 
 const prisma = new PrismaClient();
 
@@ -35,33 +36,22 @@ const authService = {
   },
   login: async (email, password) => {
     if (!email || !password) {
-      return {
-        errCode: 1,
-        message: "Vui lòng nhập đầy đủ thông tin!",
-      };
+      throw new AppError("Vui lòng nhập đầy đủ thông tin!", 400);
     }
     const user = await prisma.user.findUnique({
       where: { email: email },
     });
     if (!user) {
-      return {
-        errCode: 2,
-        message: "Email không tồn tại! Vui lòng đăng kí tài khoản.",
-      };
+      throw new AppError("Email hoặc mật khẩu không đúng!", 400);
     }
     const isPassword = await bcrypt.compare(password, user.password);
     if (!isPassword) {
-      return {
-        errCode: 3,
-        message: "Mật khẩu không đúng!",
-      };
+      throw new AppError("Email hoặc mật khẩu không đúng!", 400);
     }
 
     const token = authService.generateToken(user);
 
     return {
-      errCode: 0,
-      message: "Login success!",
       user: {
         id: user.id,
         fullName: user.fullName,

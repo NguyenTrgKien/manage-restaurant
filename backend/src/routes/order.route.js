@@ -2,80 +2,80 @@ import orderController from "../controller/order.controller.js";
 import verifyToken from "../middlewares/authMiddleware.js";
 import { verifyAdmin } from "../middlewares/verifyAdmin.js";
 import {
-  validateCreateOrder,
   validateCheckOrderTableDish,
+  validateCreateOrderDish,
+  validateCreateOrderTable,
 } from "../validators/order.validator.js";
 
 export default (router) => {
+  // order dish
   router.post(
-    "/api/v1/orders",
-    validateCreateOrder,
-    orderController.handleOrder,
+    "/api/v1/orders/dishs",
+    validateCreateOrderDish,
+    orderController.handleOrderDish,
   );
 
-  router.patch(
-    "/api/v1/orders/:orderId/cancel",
-    verifyToken,
-    orderController.handleCancelOrder,
-  );
+  // router.patch(
+  //   "/api/v1/orders/dishs/:id/cancel",
+  //   verifyToken,
+  //   orderController.handleCancelOrderDish,
+  // );
 
-  router.patch(
-    "/api/v1/orders/:orderId/status",
-    verifyToken,
-    verifyAdmin,
-    orderController.handleUpdateOrderStatus,
-  );
+  // router.patch(
+  //   "/api/v1/orders/dishs/:id/status",
+  //   verifyToken,
+  //   verifyAdmin,
+  //   orderController.handleUpdateOrderDishStatus,
+  // );
 
-  router.get(
-    "/api/v1/orders/admin",
-    verifyToken,
-    verifyAdmin,
-    orderController.getAllOrderForAdmin,
-  );
+  // router.get(
+  //   "/api/v1/orders/dishs",
+  //   verifyToken,
+  //   verifyAdmin,
+  //   orderController.getAllOrderDishForAdmin,
+  // );
 
-  router.post("/api/v1/order-tables", orderController.handleOrderTable);
-
-  router.patch(
-    "/api/v1/order-tables/:orderTableId/cancel",
-    verifyToken,
-    orderController.handleCancelOrderTable,
-  );
-
-  router.patch(
-    "/api/v1/order-tables/:orderTableId/status",
-    verifyToken,
-    verifyAdmin,
-    orderController.handleUpdateOrderTableStatus,
-  );
-
-  router.get(
-    "/api/v1/order-tables/admin",
-    verifyToken,
-    verifyAdmin,
-    orderController.getAllOrderTableForAdmin,
-  );
-
-  router.get(
-    "/api/v1/order-tables/date/:orderDate",
-    orderController.handleOrderTableDate,
-  );
-
-  router.get(
-    "/api/v1/order-tables/user/:userId",
-    verifyToken,
-    orderController.getUserOrderTableHistory,
-  );
-
+  // Order table
   router.post(
-    "/api/v1/orders/check-table",
-    validateCheckOrderTableDish,
-    orderController.handleCheckOrderTableDist,
+    "/api/v1/orders/table",
+    validateCreateOrderTable,
+    orderController.handleOrderTable,
   );
 
-  router.get(
-    "/api/v1/order-table/:id",
-    verifyToken,
-    verifyAdmin,
-    orderController.getOrderTableById,
-  );
+  // router.patch(
+  //   "/api/v1/orders/table/:id/cancel",
+  //   verifyToken,
+  //   orderController.handleCancelOrderTable,
+  // );
+
+  // router.patch(
+  //   "/api/v1/orders/table/:id/status",
+  //   verifyToken,
+  //   orderController.handleUpdateOrderTableStatus,
+  // );
+
+  // router.get(
+  //   "/api/v1/orders/table",
+  //   verifyToken,
+  //   verifyAdmin,
+  //   orderController.getAllOrderTableForAdmin,
+  // );
+
+  // router.get(
+  //   "/api/v1/orders/table/date/:orderDate", // cập nhật date
+  //   orderController.handleOrderTableDate,
+  // );
+
+  // router.post(
+  //   "/api/v1/orders/check",
+  //   validateCheckOrderTableDish,
+  //   orderController.handleCheckOrderTableDist,
+  // );
+
+  // router.get(
+  //   "/api/v1/orders/table/:id",
+  //   verifyToken,
+  //   verifyAdmin,
+  //   orderController.getOrderTableById,
+  // );
 };

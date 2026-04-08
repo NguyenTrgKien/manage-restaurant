@@ -11,7 +11,7 @@ function MyCheckIn() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scannerRef = useRef(null);
   const queryClient = useQueryClient();
-  let isStopped = false;
+  const isRunningRef = useRef(false);
 
   const { data: resCheckAttendance, isLoading } = useQuery({
     queryKey: ["checkAttendance"],
@@ -38,7 +38,7 @@ function MyCheckIn() {
         async (decodedText) => {
           try {
             await scanner.stop();
-            isStopped = true;
+            isRunningRef.current = false;
           } catch (error) {}
           setIsScanning(false);
 
@@ -64,20 +64,24 @@ function MyCheckIn() {
           }
         },
       )
+      .then(() => {
+        isRunningRef.current = true;
+      })
       .catch((error) => {
         setIsScanning(false);
       });
     return () => {
-      if (!isStopped) {
-        isStopped = true;
+      if (isRunningRef.current) {
+        isRunningRef.current = false;
         scanner.stop().catch(() => {});
       }
     };
   }, [isScanning]);
 
   const stopScan = async () => {
-    if (scannerRef.current) {
+    if (scannerRef.current && isRunningRef.current) {
       try {
+        isRunningRef.current = false;
         await scannerRef.current.stop();
       } catch {}
       scannerRef.current = null;
@@ -91,7 +95,7 @@ function MyCheckIn() {
   return (
     <div className="w-full h-full bg-white p-[2rem] rounded-md space-y-8 min-h-[calc(100vh-10rem)]">
       <div>
-        <h3 className="text-[1.8rem] md:text-[2.2rem] font-semibold text-gray-800">
+        <h3 className="text-[1.8rem] md:text-[2.2rem]  text-gray-800">
           Quét mã chấm công
         </h3>
         <p className="text-[1.4rem] md:text-[1.6rem]">
@@ -147,7 +151,9 @@ function MyCheckIn() {
                   className="w-full rounded-[1.2rem] overflow-hidden"
                 />
                 <button
-                  onClick={stopScan}
+                  onClick={() => {
+                    stopScan();
+                  }}
                   className="w-full mt-4 py-[1.2rem] rounded-[.8rem] border border-gray-300 text-[1.4rem] md:text-[1.8rem] text-gray-600"
                 >
                   Huỷ
@@ -159,7 +165,7 @@ function MyCheckIn() {
               <button
                 onClick={() => setIsScanning(true)}
                 disabled={isSubmitting || isDone || !canScan}
-                className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem] font-semibold transition-colors disabled:opacity-60 mb-6"
+                className="w-full max-w-[40rem] py-[1.6rem] rounded-[1rem] bg-cyan-500 hover:bg-cyan-600 text-white text-[1.4rem] md:text-[1.8rem]  transition-colors disabled:opacity-60 mb-6"
               >
                 {isSubmitting
                   ? "Đang xử lý..."
